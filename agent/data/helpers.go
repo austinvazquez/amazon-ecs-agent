@@ -15,8 +15,8 @@ package data
 
 import (
 	"encoding/json"
+	"fmt"
 
-	"github.com/pkg/errors"
 	bolt "go.etcd.io/bbolt"
 )
 
@@ -24,11 +24,11 @@ func putObject(bucket *bolt.Bucket, key string, obj interface{}) error {
 	keyBytes := []byte(key)
 	data, err := json.Marshal(obj)
 	if err != nil {
-		return errors.Wrapf(err, "failed to marshal object with key %q", key)
+		return fmt.Errorf("failed to marshal object with key %q: %v", key, err)
 	}
 
 	if err := bucket.Put(keyBytes, data); err != nil {
-		return errors.Wrapf(err, "failed to insert object with key %q", key)
+		return fmt.Errorf("failed to insert object with key %q: %v", key, err)
 	}
 
 	return nil
@@ -38,12 +38,12 @@ func getObject(tx *bolt.Tx, bucketName, id string, out interface{}) error {
 	bucket := tx.Bucket([]byte(bucketName))
 	data := bucket.Get([]byte(id))
 	if data == nil {
-		return errors.Errorf("object %s not found in bucket %s", id, bucketName)
+		return fmt.Errorf("object %s not found in bucket %s", id, bucketName)
 	}
 
 	if out != nil {
 		if err := json.Unmarshal(data, out); err != nil {
-			return errors.Wrapf(err, "failed to unmarshal object with key %q", id)
+			return fmt.Errorf("failed to unmarshal object with key %q: %v", id, err)
 		}
 	}
 

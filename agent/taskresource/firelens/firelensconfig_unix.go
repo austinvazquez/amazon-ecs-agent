@@ -20,7 +20,6 @@ import (
 	"fmt"
 
 	"github.com/cihub/seelog"
-	"github.com/pkg/errors"
 
 	generator "github.com/awslabs/go-config-generator-for-fluentd-and-fluentbit"
 )
@@ -224,12 +223,12 @@ func (firelens *FirelensResource) addHealthcheckSections(config generator.Fluent
 // addOutputSection adds an output section to the firelens container's config that specifies how it routes another
 // container's logs. It's constructed based on that container's log options.
 // logOptions is a set of key-value pairs, which includes the following:
-//     1. The name of the output plugin (required when there are output options specified, i.e. the ones in 4). For
+//  1. The name of the output plugin (required when there are output options specified, i.e. the ones in 4). For
 //     fluentd, the key is "@type", for fluentbit, the key is "Name".
-//     2. include-pattern (optional): a regex specifying the logs to be included.
-//     3. exclude-pattern (optional): a regex specifying the logs to be excluded.
-//     4. All other key-value pairs are customer specified options for the plugin. They are unique for each plugin and
-//        we don't check them.
+//  2. include-pattern (optional): a regex specifying the logs to be included.
+//  3. exclude-pattern (optional): a regex specifying the logs to be excluded.
+//  4. All other key-value pairs are customer specified options for the plugin. They are unique for each plugin and
+//     we don't check them.
 func addOutputSection(tag, firelensConfigType string, logOptions map[string]string, config generator.FluentConfig) (generator.FluentConfig, error) {
 	var outputKey string
 	if firelensConfigType == FirelensConfigTypeFluentd {
@@ -255,9 +254,7 @@ func addOutputSection(tag, firelensConfigType string, logOptions map[string]stri
 	output, ok := logOptions[outputKey]
 	// If there are some output options specified, there must be an output key so that we know what is the output plugin.
 	if len(outputOptions) > 0 && !ok {
-		return config, errors.New(
-			fmt.Sprintf("missing output key %s which is required for firelens configuration of type %s",
-				outputKey, firelensConfigType))
+		return config, fmt.Errorf("missing output key %s which is required for firelens configuration of type %s", outputKey, firelensConfigType)
 	} else if !ok { // Otherwise it's ok to not generate an output section, since customers may specify the output in external config.
 		return config, nil
 	}

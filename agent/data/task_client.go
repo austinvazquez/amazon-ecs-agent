@@ -15,11 +15,11 @@ package data
 
 import (
 	"encoding/json"
+	"fmt"
 
 	apitask "github.com/aws/amazon-ecs-agent/agent/api/task"
 	"github.com/aws/amazon-ecs-agent/agent/utils"
 
-	"github.com/pkg/errors"
 	bolt "go.etcd.io/bbolt"
 )
 
@@ -27,7 +27,7 @@ import (
 func (c *client) SaveTask(task *apitask.Task) error {
 	id, err := utils.GetTaskID(task.Arn)
 	if err != nil {
-		return errors.Wrap(err, "failed to generate database id")
+		return fmt.Errorf("failed to generate database id: %v", err)
 	}
 	return c.db.Batch(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(tasksBucketName))

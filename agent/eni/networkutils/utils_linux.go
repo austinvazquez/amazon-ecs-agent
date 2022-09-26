@@ -19,6 +19,7 @@ package networkutils
 
 import (
 	"context"
+	"fmt"
 	"path/filepath"
 	"strings"
 	"time"
@@ -26,7 +27,6 @@ import (
 	apierrors "github.com/aws/amazon-ecs-agent/agent/api/errors"
 	"github.com/aws/amazon-ecs-agent/agent/eni/netlinkwrapper"
 	"github.com/aws/amazon-ecs-agent/agent/utils/retry"
-	"github.com/pkg/errors"
 
 	"github.com/cihub/seelog"
 )
@@ -80,8 +80,7 @@ func (retriever *macAddressRetriever) retrieve() (string, error) {
 			// Return a retriable error when mac address is empty. If the error
 			// is not wrapped with the RetriableError interface, RetryWithBackoffCtx
 			// treats them as retriable by default
-			return errors.Errorf("eni mac address: retrieved empty address for device %s",
-				retriever.dev)
+			return fmt.Errorf("eni mac address: retrieved empty address for device %s", retriever.dev)
 		}
 
 		return nil
@@ -92,8 +91,7 @@ func (retriever *macAddressRetriever) retrieve() (string, error) {
 	// RetryWithBackoffCtx returns nil when the context is cancelled. Check if there was
 	// a timeout here. TODO: Fix RetryWithBackoffCtx to return ctx.Err() on context Done()
 	if err = ctx.Err(); err != nil {
-		return "", errors.Wrapf(err, "eni mac address: timed out waiting for eni device '%s'",
-			retriever.dev)
+		return "", fmt.Errorf("eni mac address: timed out waiting for eni device '%s': %v", retriever.dev, err)
 	}
 
 	return retriever.macAddress, nil

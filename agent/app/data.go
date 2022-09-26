@@ -14,6 +14,7 @@
 package app
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -23,8 +24,6 @@ import (
 	"github.com/aws/amazon-ecs-agent/agent/engine/dockerstate"
 	"github.com/aws/amazon-ecs-agent/agent/engine/execcmd"
 	"github.com/aws/amazon-ecs-agent/agent/eventstream"
-
-	"github.com/pkg/errors"
 )
 
 const (
@@ -46,20 +45,20 @@ type savedData struct {
 // load from boltdb, and if it doesn't get anything, it tries to load from state file and then save data it loaded to
 // boltdb. Behavior of three cases are considered:
 //
-// 1. Agent starts from fresh instance (no previous state):
-//    (1) Try to load from boltdb, get nothing;
-//    (2) Try to load from state file, get nothing;
-//    (3) Return empty data.
+//  1. Agent starts from fresh instance (no previous state):
+//     (1) Try to load from boltdb, get nothing;
+//     (2) Try to load from state file, get nothing;
+//     (3) Return empty data.
 //
-// 2. Agent starts with previous state stored in boltdb:
-//    (1) Try to load from boltdb, get the data;
-//    (2) Return loaded data.
+//  2. Agent starts with previous state stored in boltdb:
+//     (1) Try to load from boltdb, get the data;
+//     (2) Return loaded data.
 //
-// 3. Agent starts with previous state stored in state file (i.e. it was just upgraded from an old agent that uses state file):
-//    (1) Try to load from boltdb, get nothing;
-//    (2) Try to load from state file, get something;
-//    (3) Save loaded data to boltdb;
-//    (4) Return loaded data.
+//  3. Agent starts with previous state stored in state file (i.e. it was just upgraded from an old agent that uses state file):
+//     (1) Try to load from boltdb, get nothing;
+//     (2) Try to load from state file, get something;
+//     (3) Save loaded data to boltdb;
+//     (4) Return loaded data.
 func (agent *ecsAgent) loadData(containerChangeEventStream *eventstream.EventStream,
 	credentialsManager credentials.Manager,
 	state dockerstate.TaskEngineState,
@@ -74,7 +73,7 @@ func (agent *ecsAgent) loadData(containerChangeEventStream *eventstream.EventStr
 
 	err := agent.loadDataFromBoltDB(s)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to load previous data from BoltDB")
+		return nil, fmt.Errorf("failed to load previous data from BoltDB: %v", err)
 	}
 
 	// The fact that agent version is present in the boltdb database is served as an indicator that
@@ -87,12 +86,12 @@ func (agent *ecsAgent) loadData(containerChangeEventStream *eventstream.EventStr
 
 	err = agent.loadDataFromStateFile(s)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to load previous data from state file")
+		return nil, fmt.Errorf("failed to load previous data from state file: %v", err)
 	}
 
 	err = agent.saveDataToBoltDB(s)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to save loaded data to BoltDB")
+		return nil, fmt.Errorf("failed to save loaded data to BoltDB: %v", err)
 	}
 
 	return s, nil
@@ -101,7 +100,7 @@ func (agent *ecsAgent) loadData(containerChangeEventStream *eventstream.EventStr
 func (agent *ecsAgent) loadDataFromBoltDB(s *savedData) error {
 	err := s.taskEngine.LoadState()
 	if err != nil {
-		return errors.Wrap(err, "failed to load task engine state")
+		return fmt.Errorf("failed to load task engine state: %v", err)
 	}
 
 	s.agentVersion, err = agent.loadMetadata(data.AgentVersionKey)
@@ -131,7 +130,7 @@ func (agent *ecsAgent) loadDataFromBoltDB(s *savedData) error {
 	if seqNumStr != "" {
 		s.latestTaskManifestSeqNum, err = strconv.ParseInt(seqNumStr, 10, 64)
 		if err != nil {
-			return errors.Wrapf(err, "failed to convert saved task manifest sequence number to int64: %s", seqNumStr)
+			return fmt.Errorf("failed to convert saved task manifest sequence number to int64: %s: %v", seqNumStr, err)
 		}
 	}
 	return nil
@@ -190,7 +189,7 @@ func (agent *ecsAgent) loadMetadata(key string) (string, error) {
 			// Happen when starting with empty db, not actual error
 			return "", nil
 		}
-		return "", errors.Wrapf(err, "failed to get value for metadata '%s'", key)
+		return "", fmt.Errorf("failed to get value for metadata '%s': %v", key, err)
 	}
 	return val, nil
 }

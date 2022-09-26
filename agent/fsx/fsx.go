@@ -14,9 +14,10 @@
 package fsx
 
 import (
+	"fmt"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/fsx"
-	"github.com/pkg/errors"
 )
 
 // GetFileSystemDNSNames returns a map of filesystem ids and corresponding dns names
@@ -48,7 +49,7 @@ func describeFileSystems(fileSystemIds []string, client FSxClient) (*fsx.Describ
 
 	out, err := client.DescribeFileSystems(in)
 	if err != nil {
-		return nil, errors.Wrapf(err, "fsx describing filesystem(s) from the service for %v", fileSystemIds)
+		return nil, fmt.Errorf("fsx describing filesystem(s) from the service for %v: %v", fileSystemIds, err)
 	}
 
 	return out, nil

@@ -14,11 +14,12 @@
 package v4
 
 import (
+	"fmt"
+
 	"github.com/aws/amazon-ecs-agent/agent/engine/dockerstate"
 	"github.com/aws/amazon-ecs-agent/agent/stats"
 	"github.com/cihub/seelog"
 	"github.com/docker/docker/api/types"
-	"github.com/pkg/errors"
 )
 
 // StatsResponse is the v4 Stats response. It augments the v4 Stats response
@@ -35,9 +36,7 @@ func NewV4TaskStatsResponse(taskARN string,
 
 	containerMap, ok := state.ContainerMapByArn(taskARN)
 	if !ok {
-		return nil, errors.Errorf(
-			"v4 task stats response: unable to lookup containers for task %s",
-			taskARN)
+		return nil, fmt.Errorf("v4 task stats response: unable to lookup containers for task %s", taskARN)
 	}
 
 	resp := make(map[string]StatsResponse)

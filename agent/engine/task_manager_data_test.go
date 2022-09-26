@@ -18,6 +18,7 @@ package engine
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	apicontainer "github.com/aws/amazon-ecs-agent/agent/api/container"
@@ -33,7 +34,6 @@ import (
 	"github.com/aws/amazon-ecs-agent/agent/taskresource/volume"
 	utilsync "github.com/aws/amazon-ecs-agent/agent/utils/sync"
 
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

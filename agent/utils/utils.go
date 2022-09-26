@@ -33,7 +33,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 
-	"github.com/pkg/errors"
 	"golang.org/x/net/http/httpproxy"
 )
 
@@ -226,11 +225,11 @@ func SearchStrInDir(dir, filePrefix, content string) error {
 func GetTaskID(taskARN string) (string, error) {
 	_, err := arn.Parse(taskARN)
 	if err != nil {
-		return "", errors.Errorf("failed to get task id: task arn format invalid: %s", taskARN)
+		return "", fmt.Errorf("failed to get task id: task arn format invalid: %s", taskARN)
 	}
 	fields := strings.Split(taskARN, "/")
 	if len(fields) < 2 {
-		return "", errors.Errorf("failed to get task id: task arn format invalid: %s", taskARN)
+		return "", fmt.Errorf("failed to get task id: task arn format invalid: %s", taskARN)
 	}
 	return fields[len(fields)-1], nil
 }
@@ -239,11 +238,11 @@ func GetTaskID(taskARN string) (string, error) {
 func GetENIAttachmentId(eniAttachmentArn string) (string, error) {
 	_, err := arn.Parse(eniAttachmentArn)
 	if err != nil {
-		return "", errors.Errorf("failed to get eni attachment id: eni attachment arn format invalid: %s", eniAttachmentArn)
+		return "", fmt.Errorf("failed to get eni attachment id: eni attachment arn format invalid: %s", eniAttachmentArn)
 	}
 	fields := strings.Split(eniAttachmentArn, "/")
 	if len(fields) < 2 {
-		return "", errors.Errorf("failed to get eni attachment id: eni attachment arn invalid: %s", eniAttachmentArn)
+		return "", fmt.Errorf("failed to get eni attachment id: eni attachment arn invalid: %s", eniAttachmentArn)
 	}
 	return fields[len(fields)-1], nil
 }

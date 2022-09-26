@@ -31,7 +31,6 @@ require (
 	github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pborman/uuid v0.0.0-20150603214016-ca53cad383ca
-	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v0.9.4
 	github.com/prometheus/client_model v0.0.0-20190812154241-14fe0d1b01d4
 	github.com/prometheus/procfs v0.6.0 // indirect
@@ -62,7 +61,6 @@ replace (
 	github.com/golang/protobuf => github.com/golang/protobuf v1.4.1
 	github.com/jmespath/go-jmespath => github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af
 	github.com/konsorten/go-windows-terminal-sequences => github.com/konsorten/go-windows-terminal-sequences v1.0.1
-	github.com/pkg/errors v0.8.1 => github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_model => github.com/prometheus/client_model v0.0.0-20180712105110-5c3871d89910
 	github.com/sirupsen/logrus => github.com/sirupsen/logrus v1.1.1
 	github.com/stretchr/testify => github.com/stretchr/testify v1.2.2

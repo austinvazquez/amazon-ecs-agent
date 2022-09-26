@@ -17,6 +17,7 @@
 package firelens
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -26,7 +27,6 @@ import (
 	"time"
 
 	"github.com/cihub/seelog"
-	"github.com/pkg/errors"
 
 	apicontainer "github.com/aws/amazon-ecs-agent/agent/api/container"
 	apicontainerstatus "github.com/aws/amazon-ecs-agent/agent/api/container/status"
@@ -120,7 +120,7 @@ func NewFirelensResource(cluster, taskARN, taskDefinition, ec2InstanceID, dataDi
 
 	err := firelensResource.parseOptions(firelensOptions)
 	if err != nil {
-		return nil, errors.Wrap(err, "error parsing firelens options")
+		return nil, fmt.Errorf("error parsing firelens options: %v", err)
 	}
 
 	firelensResource.initStatusToTransition()
@@ -142,13 +142,13 @@ func (firelens *FirelensResource) parseOptions(options map[string]string) error 
 
 	if externalConfigType, ok := options[ExternalConfigTypeOption]; ok {
 		if externalConfigType != ExternalConfigTypeS3 && externalConfigType != ExternalConfigTypeFile {
-			return errors.Errorf("invalid value %s is specified for option %s", externalConfigType, ExternalConfigTypeOption)
+			return fmt.Errorf("invalid value %s is specified for option %s", externalConfigType, ExternalConfigTypeOption)
 		}
 		firelens.externalConfigType = externalConfigType
 
 		externalConfigValue, ok := options[externalConfigValueOption]
 		if !ok {
-			return errors.Errorf("option %s is specified but %s is not specified", ExternalConfigTypeOption, externalConfigValueOption)
+			return fmt.Errorf("option %s is specified but %s is not specified", ExternalConfigTypeOption, externalConfigValueOption)
 		}
 		firelens.externalConfigValue = externalConfigValue
 	}
@@ -337,8 +337,7 @@ func (firelens *FirelensResource) ApplyTransition(nextState resourcestatus.Resou
 
 	transitionFunc, ok := firelens.statusToTransitions[nextState]
 	if !ok {
-		err := errors.Errorf("resource [%s]: impossible to transition to %s", ResourceName,
-			firelens.StatusString(nextState))
+		err := fmt.Errorf("resource [%s]: impossible to transition to %s", ResourceName, firelens.StatusString(nextState))
 		firelens.setTerminalReason(err.Error())
 		return err
 	}
@@ -405,7 +404,7 @@ func (firelens *FirelensResource) Create() error {
 
 	err := firelens.createDirectories()
 	if err != nil {
-		err = errors.Wrapf(err, "unable to initialize resource directory %s", firelens.resourceDir)
+		err = fmt.Errorf("unable to initialize resource directory %s: %v", firelens.resourceDir, err)
 		firelens.setTerminalReason(err.Error())
 		return err
 	}
@@ -413,7 +412,7 @@ func (firelens *FirelensResource) Create() error {
 	if firelens.externalConfigType == ExternalConfigTypeS3 {
 		err = firelens.downloadConfigFromS3()
 		if err != nil {
-			err = errors.Wrap(err, "unable to download firelens s3 config file")
+			err = fmt.Errorf("unable to download firelens s3 config file: %v", err)
 			firelens.setTerminalReason(err.Error())
 			return err
 		}
@@ -421,7 +420,7 @@ func (firelens *FirelensResource) Create() error {
 
 	err = firelens.generateConfigFile()
 	if err != nil {
-		err = errors.Wrap(err, "unable to generate firelens config file")
+		err = fmt.Errorf("unable to generate firelens config file: %v", err)
 		firelens.setTerminalReason(err.Error())
 		return err
 	}
@@ -432,11 +431,12 @@ func (firelens *FirelensResource) Create() error {
 var mkdirAll = os.MkdirAll
 
 // createDirectories creates two directories:
-//  - $(DATA_DIR)/firelens/$(TASK_ID)/config: used to store firelens config file. The config file under this directory
-//    will be mounted to the firelens container at an expected path.
-//  - $(DATA_DIR)/firelens/$(TASK_ID)/socket: used to store the unix socket. This directory will be mounted to
-//    the firelens container and it will generate a socket file under this directory. Containers that use firelens to
-//    send logs will then use this socket to send logs to the firelens container.
+//   - $(DATA_DIR)/firelens/$(TASK_ID)/config: used to store firelens config file. The config file under this directory
+//     will be mounted to the firelens container at an expected path.
+//   - $(DATA_DIR)/firelens/$(TASK_ID)/socket: used to store the unix socket. This directory will be mounted to
+//     the firelens container and it will generate a socket file under this directory. Containers that use firelens to
+//     send logs will then use this socket to send logs to the firelens container.
+//
 // Note: socket path has a limit of at most 108 characters on Linux. If using default data dir, the
 // resulting socket path will be 79 characters (/var/lib/ecs/data/firelens/<task-id>/socket/fluent.sock) which is fine.
 // However if ECS_HOST_DATA_DIR is specified to be a longer path, we will exceed the limit and fail. I don't really
@@ -445,13 +445,13 @@ func (firelens *FirelensResource) createDirectories() error {
 	configDir := filepath.Join(firelens.resourceDir, "config")
 	err := mkdirAll(configDir, os.ModePerm)
 	if err != nil {
-		return errors.Wrap(err, "unable to create config directory")
+		return fmt.Errorf("unable to create config directory: %v", err)
 	}
 
 	socketDir := filepath.Join(firelens.resourceDir, "socket")
 	err = mkdirAll(socketDir, os.ModePerm)
 	if err != nil {
-		return errors.Wrap(err, "unable to create socket directory")
+		return fmt.Errorf("unable to create socket directory: %v", err)
 	}
 	return nil
 }
@@ -461,7 +461,7 @@ func (firelens *FirelensResource) createDirectories() error {
 func (firelens *FirelensResource) generateConfigFile() error {
 	config, err := firelens.generateConfig()
 	if err != nil {
-		return errors.Wrap(err, "unable to generate firelens config")
+		return fmt.Errorf("unable to generate firelens config: %v", err)
 	}
 
 	confFilePath := filepath.Join(firelens.resourceDir, "config", "fluent.conf")
@@ -473,7 +473,7 @@ func (firelens *FirelensResource) generateConfigFile() error {
 		}
 	}, confFilePath)
 	if err != nil {
-		return errors.Wrapf(err, "unable to generate firelens config file")
+		return fmt.Errorf("unable to generate firelens config file: %v", err)
 	}
 
 	seelog.Infof("Generated firelens config file at: %s", confFilePath)
@@ -490,12 +490,12 @@ func (firelens *FirelensResource) downloadConfigFromS3() error {
 
 	bucket, key, err := s3.ParseS3ARN(firelens.externalConfigValue)
 	if err != nil {
-		return errors.Wrap(err, "unable to parse bucket and key from s3 arn")
+		return fmt.Errorf("unable to parse bucket and key from s3 arn: %v", err)
 	}
 
 	s3Client, err := firelens.s3ClientCreator.NewS3ClientForBucket(bucket, firelens.region, creds.GetIAMRoleCredentials())
 	if err != nil {
-		return errors.Wrapf(err, "unable to initialize s3 client for bucket %s", bucket)
+		return fmt.Errorf("unable to initialize s3 client for bucket %s: %v", bucket, err)
 	}
 
 	confFilePath := filepath.Join(firelens.resourceDir, "config", "external.conf")
@@ -504,7 +504,7 @@ func (firelens *FirelensResource) downloadConfigFromS3() error {
 	}, confFilePath)
 
 	if err != nil {
-		return errors.Wrapf(err, "unable to download s3 config %s from bucket %s", key, bucket)
+		return fmt.Errorf("unable to download s3 config %s from bucket %s: %v", key, bucket, err)
 	}
 
 	seelog.Debugf("Downloaded firelens config file from s3 and saved to: %s", confFilePath)

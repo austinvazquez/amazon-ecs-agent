@@ -15,12 +15,12 @@ package container
 
 import (
 	"encoding/json"
+	"fmt"
 
 	apicontainerstatus "github.com/aws/amazon-ecs-agent/agent/api/container/status"
 	resourcestatus "github.com/aws/amazon-ecs-agent/agent/taskresource/status"
 
 	"github.com/cihub/seelog"
-	"github.com/pkg/errors"
 )
 
 // TransitionDependencySet contains dependencies that impact transitions of
@@ -77,8 +77,7 @@ func (td *TransitionDependenciesMap) UnmarshalJSON(b []byte) error {
 	// Unmarshal to deprecated 'TransitionDependencySet' and then convert to a map
 	tdSet := TransitionDependencySet{}
 	if err := json.Unmarshal(b, &tdSet); err != nil {
-		return errors.Wrapf(err,
-			"Unmarshal 'TransitionDependencySet': does not comply with any of the dependency types")
+		return fmt.Errorf("unmarshal 'TransitionDependencySet': does not comply with any of the dependency types: %v", err)
 	}
 	for _, dep := range tdSet.ContainerDependencies {
 		dependentStatus := dep.DependentStatus

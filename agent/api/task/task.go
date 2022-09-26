@@ -16,6 +16,7 @@ package task
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"path/filepath"
 	"reflect"
@@ -54,7 +55,6 @@ import (
 	"github.com/aws/amazon-ecs-agent/agent/utils"
 	"github.com/aws/aws-sdk-go/private/protocol/json/jsonutil"
 	dockercontainer "github.com/docker/docker/api/types/container"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -695,7 +695,7 @@ func (task *Task) addSharedVolumes(SharedVolumeMatchFullConfig bool, ctx context
 	if !volumeConfig.Autoprovision {
 		volumeMetadata := dockerClient.InspectVolume(ctx, vol.Name, dockerclient.InspectVolumeTimeout)
 		if volumeMetadata.Error != nil {
-			return errors.Wrapf(volumeMetadata.Error, "initialize volume: volume detection failed, volume '%s' does not exist and autoprovision is set to false", vol.Name)
+			return fmt.Errorf("initialize volume: volume detection failed, volume '%s' does not exist and autoprovision is set to false: %v", vol.Name, volumeMetadata.Error)
 		}
 		return nil
 	}
@@ -750,7 +750,7 @@ func (task *Task) addSharedVolumes(SharedVolumeMatchFullConfig bool, ctx context
 			field.Volume: volumeConfig.DockerVolumeName,
 		})
 	} else if !reflect.DeepEqual(volumeMetadata.DockerVolume.Labels, volumeConfig.Labels) {
-		return errors.Errorf("intialize volume: non-autoprovisioned volume does not match existing volume labels: existing: %v, expected: %v",
+		return fmt.Errorf("intialize volume: non-autoprovisioned volume does not match existing volume labels: existing: %v, expected: %v",
 			volumeMetadata.DockerVolume.Labels, volumeConfig.Labels)
 	}
 
@@ -760,7 +760,7 @@ func (task *Task) addSharedVolumes(SharedVolumeMatchFullConfig bool, ctx context
 			field.Volume: volumeConfig.DockerVolumeName,
 		})
 	} else if !reflect.DeepEqual(volumeMetadata.DockerVolume.Options, volumeConfig.DriverOpts) {
-		return errors.Errorf("initialize volume: non-autoprovisioned volume does not match existing volume options: existing: %v, expected: %v",
+		return fmt.Errorf("initialize volume: non-autoprovisioned volume does not match existing volume options: existing: %v, expected: %v",
 			volumeMetadata.DockerVolume.Options, volumeConfig.DriverOpts)
 	}
 	// Right now we are not adding shared, autoprovision = true volume to task as resource if it already exists (i.e. when this task didn't create the volume).
@@ -1019,12 +1019,12 @@ func (task *Task) initializeFirelensResource(config *config.Config, resourceFiel
 	containerToLogOptions := make(map[string]map[string]string)
 	// Collect plain text log options.
 	if err := task.collectFirelensLogOptions(containerToLogOptions); err != nil {
-		return errors.Wrap(err, "unable to initialize firelens resource")
+		return fmt.Errorf("unable to initialize firelens resource: %v", err)
 	}
 
 	// Collect secret log options.
 	if err := task.collectFirelensLogEnvOptions(containerToLogOptions, firelensContainer.FirelensConfig.Type); err != nil {
-		return errors.Wrap(err, "unable to initialize firelens resource")
+		return fmt.Errorf("unable to initialize firelens resource: %v", err)
 	}
 
 	for _, container := range task.Containers {
@@ -1047,7 +1047,7 @@ func (task *Task) initializeFirelensResource(config *config.Config, resourceFiel
 				ec2InstanceID, config.DataDir, firelensConfig.Type, config.AWSRegion, networkMode, firelensConfig.Options, containerToLogOptions,
 				credentialsManager, task.ExecutionCredentialsID)
 			if err != nil {
-				return errors.Wrap(err, "unable to initialize firelens resource")
+				return fmt.Errorf("unable to initialize firelens resource: %v", err)
 			}
 			task.AddResource(firelens.ResourceName, firelensResource)
 			container.BuildResourceDependency(firelensResource.GetName(), resourcestatus.ResourceCreated,
@@ -1096,7 +1096,7 @@ func (task *Task) addFirelensContainerDependency() error {
 
 		hostConfig := &dockercontainer.HostConfig{}
 		if err := json.Unmarshal([]byte(*containerHostConfig), hostConfig); err != nil {
-			return errors.Wrapf(err, "unable to decode host config of container %s", container.Name)
+			return fmt.Errorf("unable to decode host config of container %s: %v", container.Name, err)
 		}
 
 		if hostConfig.LogConfig.Type == firelensDriverName {
@@ -1128,7 +1128,7 @@ func (task *Task) collectFirelensLogOptions(containerToLogOptions map[string]map
 
 		hostConfig := &dockercontainer.HostConfig{}
 		if err := json.Unmarshal([]byte(*container.DockerConfig.HostConfig), hostConfig); err != nil {
-			return errors.Wrapf(err, "unable to decode host config of container %s", container.Name)
+			return fmt.Errorf("unable to decode host config of container %s: %v", container.Name, err)
 		}
 
 		if hostConfig.LogConfig.Type == firelensDriverName {
@@ -1160,7 +1160,7 @@ func (task *Task) collectFirelensLogEnvOptions(containerToLogOptions map[string]
 	case firelens.FirelensConfigTypeFluentbit:
 		placeholderFmt = firelensConfigVarPlaceholderFmtFluentbit
 	default:
-		return errors.Errorf("unsupported firelens config type %s", firelensConfigType)
+		return fmt.Errorf("unsupported firelens config type %s", firelensConfigType)
 	}
 
 	for _, container := range task.Containers {
@@ -1172,7 +1172,7 @@ func (task *Task) collectFirelensLogEnvOptions(containerToLogOptions map[string]
 
 				idx := task.GetContainerIndex(container.Name)
 				if idx < 0 {
-					return errors.Errorf("can't find container %s in task %s", container.Name, task.Arn)
+					return fmt.Errorf("can't find container %s in task %s", container.Name, task.Arn)
 				}
 				containerToLogOptions[container.Name][secret.Name] = fmt.Sprintf(placeholderFmt,
 					fmt.Sprintf(firelensConfigVarFmt, secret.Name, idx))
@@ -1238,15 +1238,15 @@ func (task *Task) addNetworkResourceProvisioningDependency(cfg *config.Config) e
 			}
 
 			if container.DockerConfig.Config == nil {
-				return errors.Errorf("user needs to be specified for proxy container")
+				return errors.New("user needs to be specified for proxy container")
 			}
 			containerConfig := &dockercontainer.Config{}
 			if err := json.Unmarshal([]byte(aws.StringValue(container.DockerConfig.Config)), &containerConfig); err != nil {
-				return errors.Errorf("unable to decode given docker config: %s", err.Error())
+				return fmt.Errorf("unable to decode given docker config: %v", err)
 			}
 
 			if containerConfig.User == "" {
-				return errors.Errorf("user needs to be specified for proxy container")
+				return errors.New("user needs to be specified for proxy container")
 			}
 
 			pauseConfig := dockercontainer.Config{
@@ -1256,7 +1256,7 @@ func (task *Task) addNetworkResourceProvisioningDependency(cfg *config.Config) e
 
 			bytes, err := json.Marshal(pauseConfig)
 			if err != nil {
-				return errors.Errorf("Error json marshaling pause config: %s", err)
+				return fmt.Errorf("Error json marshaling pause config: %v", err)
 			}
 			serializedConfig := string(bytes)
 			pauseContainer.DockerConfig = apicontainer.DockerConfig{
@@ -1926,7 +1926,7 @@ func (task *Task) dockerLinks(container *apicontainer.Container, dockerContainer
 
 		targetContainer, ok := dockerContainerMap[linkName]
 		if !ok {
-			return []string{}, errors.New("Link target not available: " + linkName)
+			return []string{}, fmt.Errorf("Link target not available: %s", linkName)
 		}
 		dockerLinkArr[i] = targetContainer.DockerName + ":" + linkAlias
 	}
@@ -1948,7 +1948,7 @@ func (task *Task) dockerVolumesFrom(container *apicontainer.Container, dockerCon
 	for i, volume := range container.VolumesFrom {
 		targetContainer, ok := dockerContainerMap[volume.SourceContainer]
 		if !ok {
-			return []string{}, errors.New("Volume target not available: " + volume.SourceContainer)
+			return []string{}, fmt.Errorf("Volume target not available: %v", volume.SourceContainer)
 		}
 		if volume.ReadOnly {
 			volumesFrom[i] = targetContainer.DockerName + ":ro"
@@ -1981,8 +1981,10 @@ func (task *Task) dockerHostBinds(container *apicontainer.Container) ([]string, 
 				"path":          hv.Source(),
 				"containerPath": mountPoint.ContainerPath,
 			})
-			return []string{}, errors.Errorf("Unable to resolve volume mounts; invalid path: %s %s; %s -> %s",
-				container.Name, mountPoint.SourceVolume, hv.Source(), mountPoint.ContainerPath)
+			return []string{}, fmt.Errorf(
+				"Unable to resolve volume mounts; invalid path: %s %s; %s -> %s",
+				container.Name, mountPoint.SourceVolume, hv.Source(), mountPoint.ContainerPath,
+			)
 		}
 
 		bind := hv.Source() + ":" + mountPoint.ContainerPath
@@ -2421,7 +2423,7 @@ func (task *Task) PopulateASMAuthData(container *apicontainer.Container) error {
 	asmResource := resource[0].(*asmauth.ASMAuthResource)
 	dac, ok := asmResource.GetASMDockerAuthConfig(secretID)
 	if !ok {
-		return errors.Errorf("task auth data: unable to fetch docker auth config [%s]", secretID)
+		return fmt.Errorf("task auth data: unable to fetch docker auth config [%s]", secretID)
 	}
 	container.SetASMDockerAuthConfig(dac)
 	return nil
@@ -2582,7 +2584,7 @@ func collectLogDriverSecretData(secrets []apicontainer.Secret, ssmRes *ssmsecret
 		cacheKey := secret.GetSecretResourceCacheKey()
 		if secret.Provider == apicontainer.SecretProviderSSM {
 			if ssmRes == nil {
-				return nil, errors.Errorf("missing secret value for secret %s", secret.Name)
+				return nil, fmt.Errorf("missing secret value for secret %s", secret.Name)
 			}
 
 			if secretValue, ok := ssmRes.GetCachedSecretValue(cacheKey); ok {
@@ -2590,7 +2592,7 @@ func collectLogDriverSecretData(secrets []apicontainer.Secret, ssmRes *ssmsecret
 			}
 		} else if secret.Provider == apicontainer.SecretProviderASM {
 			if asmRes == nil {
-				return nil, errors.Errorf("missing secret value for secret %s", secret.Name)
+				return nil, fmt.Errorf("missing secret value for secret %s", secret.Name)
 			}
 
 			if secretValue, ok := asmRes.GetCachedSecretValue(cacheKey); ok {
@@ -2702,7 +2704,7 @@ func (task *Task) initializeEnvfilesResource(config *config.Config, credentialsM
 			envfileResource, err := envFiles.NewEnvironmentFileResource(config.Cluster, task.Arn, config.AWSRegion, config.DataDir,
 				container.Name, container.EnvironmentFiles, credentialsManager, task.ExecutionCredentialsID)
 			if err != nil {
-				return errors.Wrapf(err, "unable to initialize envfiles resource for container %s", container.Name)
+				return fmt.Errorf("unable to initialize envfiles resource for container %s: %v", container.Name, err)
 			}
 			task.AddResource(envFiles.ResourceName, envfileResource)
 			container.BuildResourceDependency(envfileResource.GetName(), resourcestatus.ResourceCreated, apicontainerstatus.ContainerCreated)
@@ -2739,7 +2741,7 @@ func (task *Task) MergeEnvVarsFromEnvfiles(container *apicontainer.Container) *a
 	var envfileResource *envFiles.EnvironmentFileResource
 	resource, ok := task.getEnvfilesResource(container.Name)
 	if !ok {
-		err := errors.New(fmt.Sprintf("task environment files: unable to retrieve environment files resource for container %s", container.Name))
+		err := fmt.Errorf("task environment files: unable to retrieve environment files resource for container %s", container.Name)
 		return apierrors.NewResourceInitError(task.Arn, err)
 	}
 	envfileResource = resource.(*envFiles.EnvironmentFileResource)

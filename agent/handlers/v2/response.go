@@ -14,6 +14,7 @@
 package v2
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -27,7 +28,6 @@ import (
 	v1 "github.com/aws/amazon-ecs-agent/agent/handlers/v1"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/cihub/seelog"
-	"github.com/pkg/errors"
 )
 
 // TaskResponse defines the schema for the task response JSON object
@@ -111,7 +111,7 @@ func NewTaskResponse(
 ) (*TaskResponse, error) {
 	task, ok := state.TaskByArn(taskARN)
 	if !ok {
-		return nil, errors.Errorf("v2 task response: unable to find task '%s'", taskARN)
+		return nil, fmt.Errorf("v2 task response: unable to find task '%s'", taskARN)
 	}
 
 	resp := &TaskResponse{
@@ -201,12 +201,12 @@ func NewContainerResponseFromState(
 ) (*ContainerResponse, error) {
 	dockerContainer, ok := state.ContainerByID(containerID)
 	if !ok {
-		return nil, errors.Errorf(
+		return nil, fmt.Errorf(
 			"v2 container response: unable to find container '%s'", containerID)
 	}
 	task, ok := state.TaskByID(containerID)
 	if !ok {
-		return nil, errors.Errorf(
+		return nil, fmt.Errorf(
 			"v2 container response: unable to find task for container '%s'", containerID)
 	}
 

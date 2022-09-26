@@ -15,12 +15,13 @@ package sdkclientfactory
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
 	"github.com/aws/amazon-ecs-agent/agent/dockerclient"
 	"github.com/aws/amazon-ecs-agent/agent/dockerclient/sdkclient"
 	log "github.com/cihub/seelog"
 	docker "github.com/docker/docker/client"
-	"github.com/pkg/errors"
 )
 
 // Factory provides a collection of docker remote clients that include a
@@ -160,24 +161,24 @@ func getDockerClientForVersion(
 		moreThanMaxCheck := ">" + apiVersion
 		minVersionCheck, err := dockerclient.DockerAPIVersion(version).Matches(lessThanMinCheck)
 		if err != nil {
-			return nil, errors.Wrapf(err, "version detection using MinAPIVersion: unable to get min version: %s", minAPIVersion)
+			return nil, fmt.Errorf("version detection using MinAPIVersion: unable to get min version: %s: %v", minAPIVersion, err)
 		}
 		maxVersionCheck, err := dockerclient.DockerAPIVersion(version).Matches(moreThanMaxCheck)
 		if err != nil {
-			return nil, errors.Wrapf(err, "version detection using MinAPIVersion: unable to get max version: %s", apiVersion)
+			return nil, fmt.Errorf("version detection using MinAPIVersion: unable to get max version: %s: %v", apiVersion, err)
 		}
 		// Do not add the version when it is outside minVersion to maxVersion
 		if minVersionCheck || maxVersionCheck {
-			return nil, errors.Errorf("version detection using MinAPIVersion: unsupported version: %s", version)
+			return nil, fmt.Errorf("version detection using MinAPIVersion: unsupported version: %s", version)
 		}
 	}
 	client, err := newVersionedClient(endpoint, string(version))
 	if err != nil {
-		return nil, errors.Wrapf(err, "version detection check: unable to create Docker client for version: %s", version)
+		return nil, fmt.Errorf("version detection check: unable to create Docker client for version: %s: %v", version, err)
 	}
 	_, err = client.Ping(derivedCtx)
 	if err != nil {
-		return nil, errors.Wrapf(err, "version detection check: failed to ping with Docker version: %s", string(version))
+		return nil, fmt.Errorf("version detection check: failed to ping with Docker version: %s: %v", version, err)
 	}
 	return client, nil
 }

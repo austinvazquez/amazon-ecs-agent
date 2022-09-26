@@ -18,9 +18,8 @@ package firelens
 
 import (
 	"encoding/json"
+	"errors"
 	"time"
-
-	"github.com/pkg/errors"
 
 	resourcestatus "github.com/aws/amazon-ecs-agent/agent/taskresource/status"
 )

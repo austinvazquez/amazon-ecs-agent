@@ -28,7 +28,6 @@ import (
 	"github.com/aws/amazon-ecs-agent/agent/taskresource"
 	resourcestatus "github.com/aws/amazon-ecs-agent/agent/taskresource/status"
 	"github.com/cihub/seelog"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -107,7 +106,7 @@ func NewVolumeResource(ctx context.Context,
 	client dockerapi.DockerClient) (*VolumeResource, error) {
 
 	if scope == TaskScope && autoprovision {
-		return nil, errors.Errorf("volume [%s] : task scoped volume could not be autoprovisioned", name)
+		return nil, fmt.Errorf("volume [%s] : task scoped volume could not be autoprovisioned", name)
 	}
 
 	v := &VolumeResource{
@@ -246,8 +245,7 @@ func (vol *VolumeResource) SteadyState() resourcestatus.ResourceStatus {
 func (vol *VolumeResource) ApplyTransition(nextState resourcestatus.ResourceStatus) error {
 	transitionFunc, ok := vol.statusToTransitions[nextState]
 	if !ok {
-		errW := errors.Errorf("volume [%s]: transition to %s impossible", vol.Name,
-			vol.StatusString(nextState))
+		errW := fmt.Errorf("volume [%s]: transition to %s impossible", vol.Name, vol.StatusString(nextState))
 		vol.setTerminalReason(errW.Error())
 		return errW
 	}

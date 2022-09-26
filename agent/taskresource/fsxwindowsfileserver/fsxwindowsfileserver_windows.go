@@ -18,6 +18,7 @@ package fsxwindowsfileserver
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os/exec"
 	"path/filepath"
@@ -41,7 +42,6 @@ import (
 	"github.com/aws/amazon-ecs-agent/agent/taskresource"
 	resourcestatus "github.com/aws/amazon-ecs-agent/agent/taskresource/status"
 	"github.com/cihub/seelog"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -239,8 +239,7 @@ func (fv *FSxWindowsFileServerResource) SteadyState() resourcestatus.ResourceSta
 func (fv *FSxWindowsFileServerResource) ApplyTransition(nextState resourcestatus.ResourceStatus) error {
 	transitionFunc, ok := fv.statusToTransitions[nextState]
 	if !ok {
-		err := errors.Errorf("resource [%s]: transition to %s impossible", fv.Name,
-			fv.StatusString(nextState))
+		err := fmt.Errorf("resource [%s]: transition to %s impossible", fv.Name, fv.StatusString(nextState))
 		fv.setTerminalReason(err.Error())
 		return err
 	}

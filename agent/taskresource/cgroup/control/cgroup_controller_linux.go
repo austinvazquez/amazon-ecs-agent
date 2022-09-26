@@ -17,6 +17,7 @@
 package control
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/aws/amazon-ecs-agent/agent/config"
@@ -25,7 +26,6 @@ import (
 
 	"github.com/cihub/seelog"
 	"github.com/containerd/cgroups"
-	"github.com/pkg/errors"
 )
 
 // control is used to implement the cgroup Control interface

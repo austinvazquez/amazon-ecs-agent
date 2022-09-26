@@ -17,6 +17,7 @@
 package ecscni
 
 import (
+	"fmt"
 	"net"
 
 	"github.com/aws/amazon-ecs-agent/agent/api/appmesh"
@@ -25,7 +26,6 @@ import (
 	"github.com/cihub/seelog"
 	"github.com/containernetworking/cni/libcni"
 	cnitypes "github.com/containernetworking/cni/pkg/types"
-	"github.com/pkg/errors"
 )
 
 // NewBridgeNetworkConfig creates the config of bridge for ADD command, where
@@ -46,7 +46,7 @@ func NewBridgeNetworkConfig(cfg *Config, includeIPAM bool) (string, *libcni.Netw
 	if includeIPAM {
 		ipamConfig, err := newIPAMConfig(cfg)
 		if err != nil {
-			return "", nil, errors.Wrap(err, "NewBridgeNetworkConfig: create ipam configuration failed")
+			return "", nil, fmt.Errorf("NewBridgeNetworkConfig: create ipam configuration failed: %v", err)
 		}
 
 		bridgeConfig.IPAM = ipamConfig
@@ -54,7 +54,7 @@ func NewBridgeNetworkConfig(cfg *Config, includeIPAM bool) (string, *libcni.Netw
 
 	networkConfig, err := newNetworkConfig(bridgeConfig, ECSBridgePluginName, cfg.MinSupportedCNIVersion)
 	if err != nil {
-		return "", nil, errors.Wrap(err, "NewBridgeNetworkConfig: construct bridge and ipam network configuration failed")
+		return "", nil, fmt.Errorf("NewBridgeNetworkConfig: construct bridge and ipam network configuration failed: %v", err)
 	}
 
 	return defaultVethName, networkConfig, nil
@@ -64,7 +64,7 @@ func NewBridgeNetworkConfig(cfg *Config, includeIPAM bool) (string, *libcni.Netw
 func NewIPAMNetworkConfig(cfg *Config) (string, *libcni.NetworkConfig, error) {
 	ipamConfig, err := newIPAMConfig(cfg)
 	if err != nil {
-		return defaultVethName, nil, errors.Wrap(err, "NewIPAMNetworkConfig: create ipam network configuration failed")
+		return defaultVethName, nil, fmt.Errorf("NewIPAMNetworkConfig: create ipam network configuration failed: %v", err)
 	}
 
 	ipamNetworkConfig := IPAMNetworkConfig{
@@ -75,7 +75,7 @@ func NewIPAMNetworkConfig(cfg *Config) (string, *libcni.NetworkConfig, error) {
 
 	networkConfig, err := newNetworkConfig(ipamNetworkConfig, ECSIPAMPluginName, cfg.MinSupportedCNIVersion)
 	if err != nil {
-		return "", nil, errors.Wrap(err, "NewIPAMNetworkConfig: construct ipam network configuration failed")
+		return "", nil, fmt.Errorf("NewIPAMNetworkConfig: construct ipam network configuration failed: %v", err)
 	}
 
 	return defaultVethName, networkConfig, nil
@@ -123,7 +123,7 @@ func NewENINetworkConfig(eni *eni.ENI, cfg *Config) (string, *libcni.NetworkConf
 
 	networkConfig, err := newNetworkConfig(eniConf, ECSENIPluginName, cfg.MinSupportedCNIVersion)
 	if err != nil {
-		return "", nil, errors.Wrap(err, "cni config: failed to create configuration")
+		return "", nil, fmt.Errorf("cni config: failed to create configuration: %v", err)
 	}
 
 	return defaultENIName, networkConfig, nil
@@ -144,7 +144,7 @@ func NewBranchENINetworkConfig(eni *eni.ENI, cfg *Config) (string, *libcni.Netwo
 
 	networkConfig, err := newNetworkConfig(eniConf, ECSBranchENIPluginName, cfg.MinSupportedCNIVersion)
 	if err != nil {
-		return "", nil, errors.Wrap(err, "NewBranchENINetworkConfig: construct the eni network configuration failed")
+		return "", nil, fmt.Errorf("NewBranchENINetworkConfig: construct the eni network configuration failed: %v", err)
 	}
 
 	return defaultENIName, networkConfig, nil
@@ -165,7 +165,7 @@ func NewAppMeshConfig(appMesh *appmesh.AppMesh, cfg *Config) (string, *libcni.Ne
 
 	networkConfig, err := newNetworkConfig(appMeshConfig, ECSAppMeshPluginName, cfg.MinSupportedCNIVersion)
 	if err != nil {
-		return "", nil, errors.Wrap(err, "NewAppMeshConfig: construct the app mesh network configuration failed")
+		return "", nil, fmt.Errorf("NewAppMeshConfig: construct the app mesh network configuration failed: %v", err)
 	}
 
 	return defaultAppMeshIfName, networkConfig, nil

@@ -18,6 +18,7 @@ package watcher
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -25,7 +26,6 @@ import (
 	"github.com/aws/amazon-ecs-agent/agent/eni/networkutils"
 
 	log "github.com/cihub/seelog"
-	"github.com/pkg/errors"
 
 	"github.com/aws/amazon-ecs-agent/agent/engine/dockerstate"
 	"github.com/aws/amazon-ecs-agent/agent/statechange"
@@ -65,7 +65,7 @@ func newWatcher(ctx context.Context,
 	notificationChannel := make(chan int)
 	err := eniMonitor.Start(notificationChannel)
 	if err != nil {
-		return nil, errors.Wrapf(err, "unable to start eni watcher")
+		return nil, fmt.Errorf("unable to start eni watcher: %v", err)
 	}
 	log.Info("windows eni watcher has been initialized")
 
@@ -152,7 +152,7 @@ func (eniWatcher *ENIWatcher) eventHandler() {
 func (eniWatcher *ENIWatcher) getAllInterfaces() (state map[string]int, err error) {
 	interfaces, err := eniWatcher.netutils.GetAllNetworkInterfaces()
 	if err != nil {
-		return nil, errors.Wrap(err, "error retrieving available interfaces")
+		return nil, fmt.Errorf("error retrieving available interfaces: %v", err)
 	}
 
 	if len(interfaces) == 0 {

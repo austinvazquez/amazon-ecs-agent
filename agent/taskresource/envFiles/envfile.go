@@ -15,6 +15,7 @@ package envFiles
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -36,7 +37,6 @@ import (
 	"github.com/aws/amazon-ecs-agent/agent/utils/retry"
 
 	"github.com/cihub/seelog"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -238,8 +238,7 @@ func (envfile *EnvironmentFileResource) NextKnownState() resourcestatus.Resource
 func (envfile *EnvironmentFileResource) ApplyTransition(nextState resourcestatus.ResourceStatus) error {
 	transitionFunc, ok := envfile.statusToTransitions[nextState]
 	if !ok {
-		return errors.Errorf("resource [%s]: transition to %s impossible", envfile.GetName(),
-			envfile.StatusString(nextState))
+		return fmt.Errorf("resource [%s]: transition to %s impossible", envfile.GetName(), envfile.StatusString(nextState))
 	}
 	return transitionFunc()
 }
@@ -338,7 +337,7 @@ func (envfile *EnvironmentFileResource) createEnvfileDirectory(bucket, key strin
 	envfileDir := filepath.Join(envfile.resourceDir, bucket, keyDir)
 	err := mkdirAll(envfileDir, os.ModePerm)
 	if err != nil {
-		return errors.Wrapf(err, "unable to create envfiles directory with bucket %s", bucket)
+		return fmt.Errorf("unable to create envfiles directory with bucket %s: %v", bucket, err)
 	}
 
 	return nil

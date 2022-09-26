@@ -15,13 +15,13 @@ package s3
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"regexp"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -46,7 +46,7 @@ func ParseS3ARN(s3ARN string) (bucket string, key string, err error) {
 	exp := regexp.MustCompile(s3ARNRegex)
 	match := exp.FindStringSubmatch(s3ARN)
 	if len(match) != 4 {
-		return "", "", errors.Errorf("invalid s3 arn: %s", s3ARN)
+		return "", "", fmt.Errorf("invalid s3 arn: %s", s3ARN)
 	}
 	return match[2], match[3], nil
 }

@@ -18,6 +18,7 @@ package v2
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"testing"
 	"time"
@@ -34,7 +35,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/docker/docker/api/types"
 	"github.com/golang/mock/gomock"
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 )
 

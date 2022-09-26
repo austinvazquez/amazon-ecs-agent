@@ -15,18 +15,18 @@ package data
 
 import (
 	"encoding/json"
+	"fmt"
 
 	apieni "github.com/aws/amazon-ecs-agent/agent/api/eni"
 	"github.com/aws/amazon-ecs-agent/agent/utils"
 
-	"github.com/pkg/errors"
 	bolt "go.etcd.io/bbolt"
 )
 
 func (c *client) SaveENIAttachment(eni *apieni.ENIAttachment) error {
 	id, err := utils.GetENIAttachmentId(eni.AttachmentARN)
 	if err != nil {
-		return errors.Wrap(err, "failed to generate database id")
+		return fmt.Errorf("failed to generate database id: %v", err)
 	}
 	return c.db.Batch(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(eniAttachmentsBucketName))

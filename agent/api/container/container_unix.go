@@ -17,7 +17,7 @@
 package container
 
 import (
-	"github.com/pkg/errors"
+	"errors"
 )
 
 const (

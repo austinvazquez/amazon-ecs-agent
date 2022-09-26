@@ -17,6 +17,8 @@
 package task
 
 import (
+	"errors"
+	"fmt"
 	"runtime"
 	"time"
 
@@ -36,7 +38,6 @@ import (
 	taskresourcevolume "github.com/aws/amazon-ecs-agent/agent/taskresource/volume"
 	"github.com/cihub/seelog"
 	dockercontainer "github.com/docker/docker/api/types/container"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -268,8 +269,7 @@ func (task *Task) BuildCNIConfig(includeIPAMConfig bool, cniConfig *ecscni.Confi
 			cniConfig.ID = eni.MacAddress
 			netconf, err = ecscni.NewVPCENIPluginConfigForTaskNSSetup(eni, cniConfig)
 		default:
-			err = errors.Errorf("task config: unknown interface association type: %s",
-				eni.InterfaceAssociationProtocol)
+			err = fmt.Errorf("task config: unknown interface association type: %s", eni.InterfaceAssociationProtocol)
 		}
 
 		if err != nil {

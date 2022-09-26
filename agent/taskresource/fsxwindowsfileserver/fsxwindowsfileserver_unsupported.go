@@ -17,6 +17,7 @@
 package fsxwindowsfileserver
 
 import (
+	"errors"
 	"time"
 
 	apicontainer "github.com/aws/amazon-ecs-agent/agent/api/container"
@@ -28,7 +29,6 @@ import (
 	ssmfactory "github.com/aws/amazon-ecs-agent/agent/ssm/factory"
 	"github.com/aws/amazon-ecs-agent/agent/taskresource"
 	resourcestatus "github.com/aws/amazon-ecs-agent/agent/taskresource/status"
-	"github.com/pkg/errors"
 )
 
 // FSxWindowsFileServerResource represents a fsxwindowsfileserver resource

@@ -18,10 +18,10 @@ package container
 
 import (
 	"encoding/json"
+	"errors"
 	"strings"
 
 	dockercontainer "github.com/docker/docker/api/types/container"
-	"github.com/pkg/errors"
 )
 
 const (

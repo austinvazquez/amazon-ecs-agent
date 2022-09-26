@@ -17,6 +17,7 @@
 package task
 
 import (
+	"errors"
 	"fmt"
 	"path/filepath"
 	"time"
@@ -36,7 +37,6 @@ import (
 	"github.com/containernetworking/cni/libcni"
 	dockercontainer "github.com/docker/docker/api/types/container"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -59,11 +59,11 @@ func (task *Task) adjustForPlatform(cfg *config.Config) {
 func (task *Task) initializeCgroupResourceSpec(cgroupPath string, cGroupCPUPeriod time.Duration, resourceFields *taskresource.ResourceFields) error {
 	cgroupRoot, err := task.BuildCgroupRoot()
 	if err != nil {
-		return errors.Wrapf(err, "cgroup resource: unable to determine cgroup root for task")
+		return fmt.Errorf("cgroup resource: unable to determine cgroup root for task: %v", err)
 	}
 	resSpec, err := task.BuildLinuxResourceSpec(cGroupCPUPeriod)
 	if err != nil {
-		return errors.Wrapf(err, "cgroup resource: unable to build resource spec for task")
+		return fmt.Errorf("cgroup resource: unable to build resource spec for task: %v", err)
 	}
 	cgroupResource := cgroup.NewCgroupResource(task.Arn, resourceFields.Control,
 		resourceFields.IOUtil, cgroupRoot, cgroupPath, resSpec)
@@ -98,11 +98,12 @@ func buildCgroupV1Root(taskID string) string {
 // buildCgroupV2Root creates a root cgroup using the systemd driver's special "-"
 // character. The "-" specifies a parent slice, so tasks and their containers end up
 // looking like this in the cgroup directory:
-//   /sys/fs/cgroup/ecstasks.slice/
-//   ├── ecstasks-XXXXf406f70c4c678073ae96944fXXXX.slice
-//   │   └── docker-XXXX7c6dc81f2e9a8bf1c566dc769733ccba594b3007dd289a0f50ad7923XXXX.scope
-//   └── ecstasks-XXXX30467358463ab6bbba4e73afXXXX.slice
-//       └── docker-XXXX7ef4e942552437c96051356859c1df169f16e1cf9a9fc96fd30614e6XXXX.scope
+//
+//	/sys/fs/cgroup/ecstasks.slice/
+//	├── ecstasks-XXXXf406f70c4c678073ae96944fXXXX.slice
+//	│   └── docker-XXXX7c6dc81f2e9a8bf1c566dc769733ccba594b3007dd289a0f50ad7923XXXX.scope
+//	└── ecstasks-XXXX30467358463ab6bbba4e73afXXXX.slice
+//	    └── docker-XXXX7ef4e942552437c96051356859c1df169f16e1cf9a9fc96fd30614e6XXXX.scope
 func buildCgroupV2Root(taskID string) string {
 	return fmt.Sprintf("%s-%s.slice", config.DefaultTaskCgroupV2Prefix, taskID)
 }
@@ -176,9 +177,10 @@ func (task *Task) buildLinuxMemorySpec() (specs.LinuxMemory, error) {
 	for _, container := range task.Containers {
 		containerMemoryLimit := int64(container.Memory)
 		if containerMemoryLimit > task.Memory {
-			return specs.LinuxMemory{},
-				errors.Errorf("task memory spec builder: container memory limit(%d) greater than task memory limit(%d)",
-					containerMemoryLimit, task.Memory)
+			return specs.LinuxMemory{}, fmt.Errorf(
+				"task memory spec builder: container memory limit(%d) greater than task memory limit(%d)",
+				containerMemoryLimit, task.Memory,
+			)
 		}
 	}
 
@@ -203,7 +205,7 @@ func (task *Task) overrideCgroupParent(hostConfig *dockercontainer.HostConfig) e
 	if task.MemoryCPULimitsEnabled {
 		cgroupRoot, err := task.BuildCgroupRoot()
 		if err != nil {
-			return errors.Wrapf(err, "task cgroup override: unable to obtain cgroup root for task: %s", task.Arn)
+			return fmt.Errorf("task cgroup override: unable to obtain cgroup root for task: %s: %v", task.Arn, err)
 		}
 		hostConfig.CgroupParent = cgroupRoot
 	}
@@ -283,8 +285,7 @@ func (task *Task) BuildCNIConfig(includeIPAMConfig bool, cniConfig *ecscni.Confi
 			cniConfig.ID = eni.MacAddress
 			ifName, netconf, err = ecscni.NewBranchENINetworkConfig(eni, cniConfig)
 		default:
-			err = errors.Errorf("task config: unknown interface association type: %s",
-				eni.InterfaceAssociationProtocol)
+			err = fmt.Errorf("task config: unknown interface association type: %s", eni.InterfaceAssociationProtocol)
 		}
 
 		if err != nil {

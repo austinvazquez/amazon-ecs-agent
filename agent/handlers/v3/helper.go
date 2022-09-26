@@ -14,11 +14,12 @@
 package v3
 
 import (
+	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/aws/amazon-ecs-agent/agent/engine/dockerstate"
 	"github.com/aws/amazon-ecs-agent/agent/handlers/utils"
-	"github.com/pkg/errors"
 )
 
 func GetTaskARNByRequest(r *http.Request, state dockerstate.TaskEngineState) (string, error) {
@@ -30,7 +31,7 @@ func GetTaskARNByRequest(r *http.Request, state dockerstate.TaskEngineState) (st
 	// Get task Arn from the v3 endpoint ID.
 	taskARN, ok := state.TaskARNByV3EndpointID(v3EndpointID)
 	if !ok {
-		return "", errors.Errorf("unable to get task Arn from v3 endpoint ID: %s", v3EndpointID)
+		return "", fmt.Errorf("unable to get task Arn from v3 endpoint ID: %s", v3EndpointID)
 	}
 
 	return taskARN, nil
@@ -45,7 +46,7 @@ func GetContainerIDByRequest(r *http.Request, state dockerstate.TaskEngineState)
 	// Get docker ID from the v3 endpoint ID.
 	dockerID, ok := state.DockerIDByV3EndpointID(v3EndpointID)
 	if !ok {
-		return "", errors.Errorf("unable to get docker ID from v3 endpoint ID: %s", v3EndpointID)
+		return "", fmt.Errorf("unable to get docker ID from v3 endpoint ID: %s", v3EndpointID)
 	}
 
 	return dockerID, nil

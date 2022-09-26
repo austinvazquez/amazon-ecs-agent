@@ -14,15 +14,15 @@
 package doctor
 
 import (
+	"errors"
 	"sync"
 
 	"github.com/cihub/seelog"
-	"github.com/pkg/errors"
 )
 
 var (
 	// EmptyHealthcheckError indicates an error when there are no healthcheck metrics to report
-	EmptyHealthcheckError = errors.New("No instance healthcheck status metrics to report")
+	EmptyHealthcheckError = errors.New("no instance healthcheck status metrics to report")
 )
 
 type Doctor struct {

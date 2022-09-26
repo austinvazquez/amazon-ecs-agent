@@ -16,6 +16,7 @@ package engine
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -56,7 +57,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/docker/docker/api/types"
 	dockercontainer "github.com/docker/docker/api/types/container"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -1629,7 +1629,7 @@ func (engine *DockerTaskEngine) startContainer(task *apitask.Task, container *ap
 		if err != nil {
 			return dockerapi.DockerContainerMetadata{
 				Error: ContainerNetworkingError{
-					fromError: errors.Wrapf(err, "startContainer: cni plugin invocation failed"),
+					fromError: fmt.Errorf("startContainer: cni plugin invocation failed: %v", err),
 				},
 			}
 		}
@@ -1647,8 +1647,7 @@ func (engine *DockerTaskEngine) provisionContainerResources(task *apitask.Task, 
 	if err != nil {
 		return dockerapi.DockerContainerMetadata{
 			Error: ContainerNetworkingError{
-				fromError: errors.Wrap(err,
-					"container resource provisioning: cannot setup task network namespace due to error inspecting pause container"),
+				fromError: fmt.Errorf("container resource provisioning: cannot setup task network namespace due to error inspecting pause container: %v", err),
 			},
 		}
 	}
@@ -1659,8 +1658,7 @@ func (engine *DockerTaskEngine) provisionContainerResources(task *apitask.Task, 
 	if err != nil {
 		return dockerapi.DockerContainerMetadata{
 			Error: ContainerNetworkingError{
-				fromError: errors.Wrap(err,
-					"container resource provisioning: unable to build cni configuration"),
+				fromError: fmt.Errorf("container resource provisioning: unable to build cni configuration: %v", err),
 			},
 		}
 	}
@@ -1674,8 +1672,9 @@ func (engine *DockerTaskEngine) provisionContainerResources(task *apitask.Task, 
 		})
 		return dockerapi.DockerContainerMetadata{
 			DockerID: cniConfig.ContainerID,
-			Error: ContainerNetworkingError{errors.Wrap(err,
-				"container resource provisioning: failed to setup network namespace")},
+			Error: ContainerNetworkingError{
+				fmt.Errorf("container resource provisioning: failed to setup network namespace: %v", err),
+			},
 		}
 	}
 
@@ -1698,8 +1697,9 @@ func (engine *DockerTaskEngine) provisionContainerResources(task *apitask.Task, 
 		})
 		return dockerapi.DockerContainerMetadata{
 			DockerID: cniConfig.ContainerID,
-			Error: ContainerNetworkingError{errors.Wrapf(err,
-				"container resource provisioning: failed to setup network namespace")},
+			Error: ContainerNetworkingError{
+				fmt.Errorf("container resource provisioning: failed to setup network namespace: %v", err),
+			},
 		}
 	}
 
@@ -1709,7 +1709,7 @@ func (engine *DockerTaskEngine) provisionContainerResources(task *apitask.Task, 
 }
 
 // checkTearDownPauseContainer idempotently tears down the pause container network when the pause container's known
-//or desired status is stopped.
+// or desired status is stopped.
 func (engine *DockerTaskEngine) checkTearDownPauseContainer(task *apitask.Task) {
 	if !task.IsNetworkModeAWSVPC() {
 		return
@@ -1748,7 +1748,7 @@ func (engine *DockerTaskEngine) cleanupPauseContainerNetwork(task *apitask.Task,
 	}
 	containerInspectOutput, err := engine.inspectContainer(task, container)
 	if err != nil {
-		return errors.Wrap(err, "engine: cannot cleanup task network namespace due to error inspecting pause container")
+		return fmt.Errorf("engine: cannot cleanup task network namespace due to error inspecting pause container: %v", err)
 	}
 
 	logger.Info("Cleaning up the network namespace", logger.Fields{
@@ -1756,8 +1756,9 @@ func (engine *DockerTaskEngine) cleanupPauseContainerNetwork(task *apitask.Task,
 	})
 	cniConfig, err := engine.buildCNIConfigFromTaskContainer(task, containerInspectOutput, false)
 	if err != nil {
-		return errors.Wrapf(err,
-			"engine: failed cleanup task network namespace, task: %s", task.String())
+		return fmt.Errorf(
+			"engine: failed cleanup task network namespace, task: %s: %v", task.String(), err,
+		)
 	}
 
 	err = engine.cniClient.CleanupNS(engine.ctx, cniConfig, cniCleanupTimeout)
@@ -1807,7 +1808,7 @@ func (engine *DockerTaskEngine) buildCNIConfigFromTaskContainer(
 
 	cniConfig, err := task.BuildCNIConfig(includeIPAMConfig, cniConfig)
 	if err != nil {
-		return nil, errors.Wrapf(err, "engine: failed to build cni configuration from task")
+		return nil, fmt.Errorf("engine: failed to build cni configuration from task: %v", err)
 	}
 
 	return cniConfig, nil
@@ -2046,12 +2047,12 @@ func (engine *DockerTaskEngine) getDockerID(task *apitask.Task, container *apico
 	}
 	containerMap, ok := engine.state.ContainerMapByArn(task.Arn)
 	if !ok {
-		return "", errors.Errorf("container name=%s belongs to unrecognized task taskArn=%s", container.Name, task.Arn)
+		return "", fmt.Errorf("container name=%s belongs to unrecognized task taskArn=%s", container.Name, task.Arn)
 	}
 
 	dockerContainer, ok := containerMap[container.Name]
 	if !ok {
-		return "", errors.Errorf("container name=%s not recognized by agent", container.Name)
+		return "", fmt.Errorf("container name=%s not recognized by agent", container.Name)
 	}
 
 	if dockerContainer.DockerID == "" {

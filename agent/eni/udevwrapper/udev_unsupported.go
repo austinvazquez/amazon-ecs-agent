@@ -17,9 +17,8 @@
 package udevwrapper
 
 import (
+	"fmt"
 	"runtime"
-
-	"github.com/pkg/errors"
 )
 
 type Udev interface {
@@ -27,6 +26,6 @@ type Udev interface {
 
 // New returns an UDev Monitor
 func New() (interface{}, error) {
-	return nil, errors.Errorf("udev monitor creation: unsupported platform: %s/%s",
+	return nil, fmt.Errorf("udev monitor creation: unsupported platform: %s/%s",
 		runtime.GOOS, runtime.GOARCH)
 }

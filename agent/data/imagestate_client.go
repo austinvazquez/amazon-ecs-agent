@@ -15,10 +15,10 @@ package data
 
 import (
 	"encoding/json"
+	"errors"
 
 	"github.com/aws/amazon-ecs-agent/agent/engine/image"
 
-	"github.com/pkg/errors"
 	bolt "go.etcd.io/bbolt"
 )
 

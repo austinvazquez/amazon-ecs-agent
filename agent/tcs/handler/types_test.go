@@ -17,10 +17,10 @@
 package tcshandler
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/aws/amazon-ecs-agent/agent/config"
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 )
 

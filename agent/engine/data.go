@@ -14,6 +14,8 @@
 package engine
 
 import (
+	"fmt"
+
 	apicontainer "github.com/aws/amazon-ecs-agent/agent/api/container"
 	apicontainerstatus "github.com/aws/amazon-ecs-agent/agent/api/container/status"
 	apitask "github.com/aws/amazon-ecs-agent/agent/api/task"
@@ -23,7 +25,6 @@ import (
 	"github.com/aws/amazon-ecs-agent/agent/utils"
 
 	"github.com/cihub/seelog"
-	"github.com/pkg/errors"
 )
 
 // LoadState populates the task engine state with data in db.
@@ -71,8 +72,7 @@ func (engine *DockerTaskEngine) loadContainers() error {
 		if !ok {
 			// A task is saved to task table before its containers saved to container table. It is not expected
 			// that we have a container from container table whose task is not in the task table.
-			return errors.Errorf("did not find the task of container %s: %s", container.Container.Name,
-				container.Container.GetTaskARN())
+			return fmt.Errorf("did not find the task of container %s: %s", container.Container.Name, container.Container.GetTaskARN())
 		}
 		if container.Container.GetKnownStatus() == apicontainerstatus.ContainerPulled {
 			engine.state.AddPulledContainer(container, task)
@@ -145,7 +145,7 @@ func (engine *DockerTaskEngine) SaveState() error {
 	for _, containerID := range state.GetAllContainerIDs() {
 		container, ok := state.ContainerByID(containerID)
 		if !ok {
-			return errors.Errorf("container not found: %s", containerID)
+			return fmt.Errorf("container not found: %s", containerID)
 		}
 		if err := engine.dataClient.SaveDockerContainer(container); err != nil {
 			return err

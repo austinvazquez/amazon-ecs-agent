@@ -27,7 +27,6 @@ import (
 	"github.com/cihub/seelog"
 	"github.com/containernetworking/cni/pkg/types/current"
 	"github.com/docker/docker/api/types"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -100,7 +99,7 @@ func (nsHelper *helper) ConfigureTaskNamespaceRouting(ctx context.Context, taskE
 	// reported to agent. Since the agent will kill the task, execution of other commands is immaterial.
 	err := nsHelper.invokeCommandsInsideContainer(ctx, config.ContainerID, commands, " & ")
 	if err != nil {
-		return errors.Wrapf(err, "failed to execute commands inside task namespace")
+		return fmt.Errorf("failed to execute commands inside task namespace: %v", err)
 	}
 	return nil
 }
@@ -142,7 +141,7 @@ func (nsHelper *helper) invokeCommandsInsideContainer(ctx context.Context, conta
 	}
 	// If the commands fail then return error.
 	if !inspect.Running && inspect.ExitCode != 0 {
-		return errors.Errorf("commands failed inside container %s namespace: %d", containerID, inspect.ExitCode)
+		return fmt.Errorf("commands failed inside container %s namespace: %d", containerID, inspect.ExitCode)
 	}
 
 	return nil

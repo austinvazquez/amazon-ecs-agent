@@ -14,6 +14,7 @@
 package eni
 
 import (
+	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -23,7 +24,6 @@ import (
 	"github.com/aws/amazon-ecs-agent/agent/utils"
 
 	"github.com/aws/amazon-ecs-agent/agent/utils/ttime"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -89,8 +89,10 @@ func (eni *ENIAttachment) StartTimer(timeoutFunc func()) error {
 	now := time.Now()
 	duration := eni.ExpiresAt.Sub(now)
 	if duration <= 0 {
-		return errors.Errorf("eni attachment: timer expiration is in the past; expiration [%s] < now [%s]",
-			eni.ExpiresAt.String(), now.String())
+		return fmt.Errorf(
+			"eni attachment: timer expiration is in the past; expiration [%s] < now [%s]",
+			eni.ExpiresAt.String(), now.String(),
+		)
 	}
 	logger.Info("Starting ENI ack timer", getEniAttachmentLogFields(eni, duration))
 	eni.ackTimer = time.AfterFunc(duration, timeoutFunc)

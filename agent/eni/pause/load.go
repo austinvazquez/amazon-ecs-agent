@@ -21,7 +21,6 @@ import (
 	"github.com/aws/amazon-ecs-agent/agent/dockerclient/dockerapi"
 	log "github.com/cihub/seelog"
 	"github.com/docker/docker/api/types"
-	"github.com/pkg/errors"
 )
 
 // Loader defines an interface for loading the pause container image. This is mostly
@@ -45,8 +44,7 @@ func getPauseContainerImage(name string, tag string, dockerClient dockerapi.Dock
 
 	image, err := dockerClient.InspectImage(imageName)
 	if err != nil {
-		return nil, errors.Wrapf(err,
-			"pause container load: failed to inspect image: %s", imageName)
+		return nil, fmt.Errorf("pause container load: failed to inspect image: %s: %v", imageName, err)
 	}
 
 	return image, nil

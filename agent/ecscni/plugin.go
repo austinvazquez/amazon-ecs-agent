@@ -16,6 +16,7 @@ package ecscni
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -26,7 +27,6 @@ import (
 	"github.com/cihub/seelog"
 	"github.com/containernetworking/cni/libcni"
 	"github.com/containernetworking/cni/pkg/types/current"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -141,7 +141,7 @@ func (client *cniClient) cleanupNS(ctx context.Context, cfg *Config) error {
 		if err != nil {
 			// In case of error, continue cleanup as much as possible before conceding error.
 			seelog.Errorf("Delete network failed: %v", err)
-			delError = errors.Wrapf(err, "delete network failed")
+			delError = fmt.Errorf("delete network failed: %v", err)
 		}
 
 		seelog.Debugf("[ECSCNI] Completed deleting network %s type %s in the container namespace %s",
@@ -179,7 +179,7 @@ func (client *cniClient) Version(name string) (string, error) {
 	// Unmarshal this
 	err = json.Unmarshal(versionInfo, version)
 	if err != nil {
-		return "", errors.Wrapf(err, "ecscni: unmarshal version from string: %s", versionInfo)
+		return "", fmt.Errorf("ecscni: unmarshal version from string: %s: %v", versionInfo, err)
 	}
 
 	return version.str(), nil
@@ -192,13 +192,13 @@ func (client *cniClient) Capabilities(name string) ([]string, error) {
 	// Check if the plugin file exists before executing it
 	_, err := os.Stat(file)
 	if err != nil {
-		return nil, errors.Wrapf(err, "ecscni: unable to describe file info for '%s'", file)
+		return nil, fmt.Errorf("ecscni: unable to describe file info for '%s': %v", file, err)
 	}
 
 	cmd := exec.Command(file, capabilitiesCommand)
 	capabilitiesInfo, err := cmd.Output()
 	if err != nil {
-		return nil, errors.Wrapf(err, "ecscni: failed invoking capabilities command for '%s'", name)
+		return nil, fmt.Errorf("ecscni: failed invoking capabilities command for '%s': %v", name, err)
 	}
 
 	capabilities := &struct {
@@ -206,7 +206,7 @@ func (client *cniClient) Capabilities(name string) ([]string, error) {
 	}{}
 	err = json.Unmarshal(capabilitiesInfo, capabilities)
 	if err != nil {
-		return nil, errors.Wrapf(err, "ecscni: failed to unmarshal capabilities for '%s' from string: %s", name, capabilitiesInfo)
+		return nil, fmt.Errorf("ecscni: failed to unmarshal capabilities for '%s' from string: %s: %v", name, capabilitiesInfo, err)
 	}
 
 	return capabilities.Capabilities, nil

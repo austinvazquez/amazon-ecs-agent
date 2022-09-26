@@ -15,6 +15,8 @@ package asmauth
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"sync"
 	"time"
 
@@ -29,7 +31,6 @@ import (
 
 	"github.com/cihub/seelog"
 	"github.com/docker/docker/api/types"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -167,8 +168,7 @@ func (auth *ASMAuthResource) NextKnownState() resourcestatus.ResourceStatus {
 func (auth *ASMAuthResource) ApplyTransition(nextState resourcestatus.ResourceStatus) error {
 	transitionFunc, ok := auth.resourceStatusToTransitionFunction[nextState]
 	if !ok {
-		return errors.Errorf("resource [%s]: transition to %s impossible", auth.GetName(),
-			auth.StatusString(nextState))
+		return fmt.Errorf("resource [%s]: transition to %s impossible", auth.GetName(), auth.StatusString(nextState))
 	}
 	return transitionFunc()
 }

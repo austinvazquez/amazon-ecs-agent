@@ -15,11 +15,11 @@ package data
 
 import (
 	"encoding/json"
+	"fmt"
 
 	apicontainer "github.com/aws/amazon-ecs-agent/agent/api/container"
 	"github.com/aws/amazon-ecs-agent/agent/utils"
 
-	"github.com/pkg/errors"
 	bolt "go.etcd.io/bbolt"
 )
 
@@ -27,7 +27,7 @@ import (
 func (c *client) SaveDockerContainer(container *apicontainer.DockerContainer) error {
 	id, err := GetContainerID(container.Container)
 	if err != nil {
-		return errors.Wrap(err, "failed to generate database id")
+		return fmt.Errorf("failed to generate database id: %v", err)
 	}
 	return c.db.Batch(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(containersBucketName))
@@ -41,7 +41,7 @@ func (c *client) SaveDockerContainer(container *apicontainer.DockerContainer) er
 func (c *client) SaveContainer(container *apicontainer.Container) error {
 	id, err := GetContainerID(container)
 	if err != nil {
-		return errors.Wrap(err, "failed to generate database id")
+		return fmt.Errorf("failed to generate database id: %v", err)
 	}
 
 	dockerContainer, err := c.getDockerContainer(id)

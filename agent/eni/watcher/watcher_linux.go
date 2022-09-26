@@ -18,6 +18,7 @@ package watcher
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -26,7 +27,6 @@ import (
 
 	log "github.com/cihub/seelog"
 	"github.com/deniswernert/udev"
-	"github.com/pkg/errors"
 	"github.com/vishvananda/netlink"
 
 	"github.com/aws/amazon-ecs-agent/agent/engine/dockerstate"
@@ -70,7 +70,7 @@ func newWatcher(ctx context.Context,
 
 	udevWrap, err := udevwrapper.New()
 	if err != nil {
-		return nil, errors.Wrapf(err, "unable to create udev monitor")
+		return nil, fmt.Errorf("unable to create udev monitor: %v", err)
 	}
 
 	nlWrap := netlinkwrapper.New()
@@ -93,7 +93,7 @@ func newWatcher(ctx context.Context,
 func (eniWatcher *ENIWatcher) reconcileOnce(withRetry bool) error {
 	links, err := eniWatcher.netlinkClient.LinkList()
 	if err != nil {
-		return errors.Wrapf(err, "eni watcher: unable to retrieve network interfaces")
+		return fmt.Errorf("eni watcher: unable to retrieve network interfaces: %v", err)
 	}
 
 	// Return on empty list

@@ -15,6 +15,8 @@ package task
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 
 	"github.com/aws/amazon-ecs-agent/agent/config"
 	"github.com/aws/amazon-ecs-agent/agent/taskresource"
@@ -23,7 +25,6 @@ import (
 	taskresourcevolume "github.com/aws/amazon-ecs-agent/agent/taskresource/volume"
 
 	"github.com/cihub/seelog"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -76,7 +77,7 @@ func (tv *TaskVolume) UnmarshalJSON(b []byte) error {
 	case FSxWindowsFileServerVolumeType:
 		return tv.unmarshalFSxWindowsFileServerVolume(intermediate["fsxWindowsFileServerVolumeConfiguration"])
 	default:
-		return errors.Errorf("unrecognized volume type: %q", tv.Type)
+		return fmt.Errorf("unrecognized volume type: %q", tv.Type)
 	}
 }
 
@@ -101,7 +102,7 @@ func (tv *TaskVolume) MarshalJSON() ([]byte, error) {
 	case FSxWindowsFileServerVolumeType:
 		result["fsxWindowsFileServerVolumeConfiguration"] = tv.Volume
 	default:
-		return nil, errors.Errorf("unrecognized volume type: %q", tv.Type)
+		return nil, fmt.Errorf("unrecognized volume type: %q", tv.Type)
 	}
 
 	return json.Marshal(result)

@@ -18,6 +18,7 @@ package app
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -40,7 +41,6 @@ import (
 	"github.com/aws/amazon-ecs-agent/agent/taskresource"
 
 	"github.com/cihub/seelog"
-	"github.com/pkg/errors"
 	"golang.org/x/sys/windows/svc"
 )
 
@@ -341,10 +341,10 @@ func (agent *ecsAgent) startENIWatcher(state dockerstate.TaskEngineState, stateC
 	seelog.Debug("Starting ENI Watcher")
 	eniWatcher, err := watcher.New(agent.ctx, agent.mac, state, stateChangeEvents)
 	if err != nil {
-		return errors.Wrapf(err, "unable to start eni watcher")
+		return fmt.Errorf("unable to start eni watcher: %v", err)
 	}
 	if err := eniWatcher.Init(); err != nil {
-		return errors.Wrapf(err, "unable to start eni watcher")
+		return fmt.Errorf("unable to start eni watcher: %v", err)
 	}
 	go eniWatcher.Start()
 	return nil
@@ -361,7 +361,7 @@ func (agent *ecsAgent) verifyCNIPluginsCapabilities() error {
 		}
 
 		if !contains(capabilities, ecscni.CapabilityAWSVPCNetworkingMode) {
-			return errors.Errorf("plugin '%s' doesn't support the capability: %s",
+			return fmt.Errorf("plugin '%s' doesn't support the capability: %s",
 				plugin, ecscni.CapabilityAWSVPCNetworkingMode)
 		}
 	}

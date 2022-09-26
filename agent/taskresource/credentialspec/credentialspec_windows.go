@@ -19,6 +19,7 @@ package credentialspec
 import (
 	"crypto/sha256"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -40,7 +41,6 @@ import (
 	"github.com/aws/amazon-ecs-agent/agent/utils/oswrapper"
 	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/cihub/seelog"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -204,8 +204,7 @@ func (cs *CredentialSpecResource) NextKnownState() resourcestatus.ResourceStatus
 func (cs *CredentialSpecResource) ApplyTransition(nextState resourcestatus.ResourceStatus) error {
 	transitionFunc, ok := cs.resourceStatusToTransitionFunction[nextState]
 	if !ok {
-		err := errors.Errorf("resource [%s]: transition to %s impossible", cs.GetName(),
-			cs.StatusString(nextState))
+		err := fmt.Errorf("resource [%s]: transition to %s impossible", cs.GetName(), cs.StatusString(nextState))
 		cs.setTerminalReason(err.Error())
 		return err
 	}

@@ -18,6 +18,7 @@ package task
 
 import (
 	"encoding/json"
+	"error"
 	"fmt"
 	"runtime"
 	"testing"
@@ -32,7 +33,6 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/golang/mock/gomock"
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

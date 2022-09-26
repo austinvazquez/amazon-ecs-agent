@@ -14,6 +14,8 @@
 package handler
 
 import (
+	"errors"
+	"fmt"
 	"time"
 
 	"github.com/aws/amazon-ecs-agent/agent/acs/model/ecsacs"
@@ -24,7 +26,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 
 	"github.com/cihub/seelog"
-	"github.com/pkg/errors"
 
 	"context"
 )
@@ -99,8 +100,7 @@ func (attachTaskENIHandler *attachTaskENIHandler) handleSingleMessage(message *e
 	receivedAt := time.Now()
 	// Validate fields in the message
 	if err := validateAttachTaskNetworkInterfacesMessage(message); err != nil {
-		return errors.Wrapf(err,
-			"attach eni message handler: error validating AttachTaskNetworkInterface message received from ECS")
+		return errors.New("attach eni message handler: error validating AttachTaskNetworkInterface message received from ECS")
 	}
 
 	// Send ACK
@@ -118,42 +118,42 @@ func (attachTaskENIHandler *attachTaskENIHandler) handleSingleMessage(message *e
 // AttachTaskNetworkInterfacesMessage
 func validateAttachTaskNetworkInterfacesMessage(message *ecsacs.AttachTaskNetworkInterfacesMessage) error {
 	if message == nil {
-		return errors.Errorf("attach eni handler validation: empty AttachTaskNetworkInterface message received from ECS")
+		return errors.New("attach eni handler validation: empty AttachTaskNetworkInterface message received from ECS")
 	}
 
 	messageId := aws.StringValue(message.MessageId)
 	if messageId == "" {
-		return errors.Errorf("attach eni handler validation: message id not set in AttachTaskNetworkInterface message received from ECS")
+		return errors.New("attach eni handler validation: message id not set in AttachTaskNetworkInterface message received from ECS")
 	}
 
 	clusterArn := aws.StringValue(message.ClusterArn)
 	if clusterArn == "" {
-		return errors.Errorf("attach eni handler validation: clusterArn not set in AttachTaskNetworkInterface message received from ECS")
+		return errors.New("attach eni handler validation: clusterArn not set in AttachTaskNetworkInterface message received from ECS")
 	}
 
 	containerInstanceArn := aws.StringValue(message.ContainerInstanceArn)
 	if containerInstanceArn == "" {
-		return errors.Errorf("attach eni handler validation: containerInstanceArn not set in AttachTaskNetworkInterface message received from ECS")
+		return errors.New("attach eni handler validation: containerInstanceArn not set in AttachTaskNetworkInterface message received from ECS")
 	}
 
 	enis := message.ElasticNetworkInterfaces
 	if len(enis) != 1 {
-		return errors.Errorf("attach eni handler validation: incorrect number of ENIs in AttachTaskNetworkInterface message received from ECS. Obtained %d", len(enis))
+		return fmt.Errorf("attach eni handler validation: incorrect number of ENIs in AttachTaskNetworkInterface message received from ECS. Obtained %d", len(enis))
 	}
 
 	eni := enis[0]
 	if aws.StringValue(eni.MacAddress) == "" {
-		return errors.Errorf("attach eni handler validation: MACAddress not listed in AttachTaskNetworkInterface message received from ECS")
+		return errors.New("attach eni handler validation: MACAddress not listed in AttachTaskNetworkInterface message received from ECS")
 	}
 
 	taskArn := aws.StringValue(message.TaskArn)
 	if taskArn == "" {
-		return errors.Errorf("attach eni handler validation: taskArn not set in AttachTaskNetworkInterface message received from ECS")
+		return errors.New("attach eni handler validation: taskArn not set in AttachTaskNetworkInterface message received from ECS")
 	}
 
 	timeout := aws.Int64Value(message.WaitTimeoutMs)
 	if timeout <= 0 {
-		return errors.Errorf("attach eni handler validation: invalid timeout listed in AttachTaskNetworkInterface message received from ECS")
+		return errors.New("attach eni handler validation: invalid timeout listed in AttachTaskNetworkInterface message received from ECS")
 
 	}
 

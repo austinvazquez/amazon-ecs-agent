@@ -18,7 +18,7 @@ package watcher
 
 import (
 	"context"
-
+	"errors"
 	"net"
 	"sync"
 	"testing"
@@ -34,7 +34,6 @@ import (
 	mock_gonetwrapper "github.com/aws/amazon-ecs-agent/agent/eni/netwrapper/mocks"
 	"github.com/aws/amazon-ecs-agent/agent/statechange"
 	"github.com/golang/mock/gomock"
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -87,7 +86,7 @@ func newTestWatcher(ctx context.Context, primaryMAC string, state dockerstate.Ta
 	notificationChannel := make(chan int)
 	err := eniMonitor.Start(notificationChannel)
 	if err != nil {
-		return nil, errors.Wrapf(err, "error occurred while instantiating watcher")
+		return nil, fmt.Errorf("error occurred while instantiating watcher: %v", err)
 	}
 
 	return &ENIWatcher{

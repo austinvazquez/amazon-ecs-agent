@@ -17,6 +17,7 @@
 package firelens
 
 import (
+	"errors"
 	"io"
 	"os"
 	"testing"
@@ -24,7 +25,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/golang/mock/gomock"
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 

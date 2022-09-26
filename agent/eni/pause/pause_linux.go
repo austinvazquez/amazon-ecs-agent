@@ -18,6 +18,7 @@ package pause
 
 import (
 	"context"
+	"fmt"
 	"os"
 
 	"github.com/aws/amazon-ecs-agent/agent/config"
@@ -26,7 +27,6 @@ import (
 
 	log "github.com/cihub/seelog"
 	"github.com/docker/docker/api/types"
-	"github.com/pkg/errors"
 )
 
 // LoadImage helps load the pause container image for the agent
@@ -50,15 +50,12 @@ func loadFromFile(ctx context.Context, path string, dockerClient dockerapi.Docke
 	pauseContainerReader, err := open(path)
 	if err != nil {
 		if err.Error() == noSuchFile {
-			return NewNoSuchFileError(errors.Wrapf(err,
-				"pause container load: failed to read pause container image: %s", path))
+			return NewNoSuchFileError(fmt.Errorf("pause container load: failed to read pause container image: %s: %v", path, err))
 		}
-		return errors.Wrapf(err,
-			"pause container load: failed to read pause container image: %s", path)
+		return fmt.Errorf("pause container load: failed to read pause container image: %s: %v", path, err)
 	}
 	if err := dockerClient.LoadImage(ctx, pauseContainerReader, dockerclient.LoadImageTimeout); err != nil {
-		return errors.Wrapf(err,
-			"pause container load: failed to load pause container image: %s", path)
+		return fmt.Errorf("pause container load: failed to load pause container image: %s: %v", path, err)
 	}
 
 	return nil

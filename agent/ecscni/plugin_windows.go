@@ -18,6 +18,7 @@ package ecscni
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -33,7 +34,6 @@ import (
 	"github.com/cihub/seelog"
 	"github.com/containernetworking/cni/libcni"
 	"github.com/containernetworking/cni/pkg/types/current"
-	"github.com/pkg/errors"
 )
 
 var (
@@ -91,7 +91,7 @@ func (client *cniClient) doSetupNS(ctx context.Context, cfg *Config) (*current.R
 		runtimeConfig.IfName = networkConfig.IfName
 		result, err := client.libcni.AddNetwork(ctx, cniNetworkConfig, &runtimeConfig)
 		if err != nil {
-			return nil, errors.Wrap(err, "add network failed")
+			return nil, fmt.Errorf("add network failed: %v", err)
 		}
 
 		// We save the result from ecs-bridge setup invocation of the plugin.
@@ -116,7 +116,7 @@ func (client *cniClient) doSetupNS(ctx context.Context, cfg *Config) (*current.R
 	var curResult *current.Result
 	curResult, ok := ecsBridgeResult.(*current.Result)
 	if !ok {
-		return nil, errors.Errorf(
+		return nil, fmt.Errorf(
 			"cni setup: unable to convert result to expected version '%v'", ecsBridgeResult)
 	}
 

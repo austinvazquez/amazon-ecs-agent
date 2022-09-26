@@ -17,14 +17,13 @@
 package engine
 
 import (
+	"fmt"
 	"time"
 
 	apicontainer "github.com/aws/amazon-ecs-agent/agent/api/container"
 	apitask "github.com/aws/amazon-ecs-agent/agent/api/task"
 	"github.com/aws/amazon-ecs-agent/agent/logger"
 	"github.com/aws/amazon-ecs-agent/agent/logger/field"
-
-	"github.com/pkg/errors"
 )
 
 const (
@@ -44,12 +43,12 @@ func (engine *DockerTaskEngine) updateTaskENIDependencies(task *apitask.Task) {
 func (engine *DockerTaskEngine) invokePluginsForContainer(task *apitask.Task, container *apicontainer.Container) error {
 	containerInspectOutput, err := engine.inspectContainer(task, container)
 	if err != nil {
-		return errors.Wrapf(err, "error occurred while inspecting container %v", container.Name)
+		return fmt.Errorf("error occurred while inspecting container %v: %v", container.Name, err)
 	}
 
 	cniConfig, err := engine.buildCNIConfigFromTaskContainer(task, containerInspectOutput, false)
 	if err != nil {
-		return errors.Wrap(err, "unable to build cni configuration")
+		return fmt.Errorf("unable to build cni configuration: %v", err)
 	}
 
 	// Invoke the cni plugin for the container using libcni
@@ -60,7 +59,7 @@ func (engine *DockerTaskEngine) invokePluginsForContainer(task *apitask.Task, co
 			field.Container: container.Name,
 			field.Error:     err,
 		})
-		return errors.Wrap(err, "failed to connect HNS endpoint to container")
+		return fmt.Errorf("failed to connect HNS endpoint to container: %v", err)
 	}
 
 	return nil

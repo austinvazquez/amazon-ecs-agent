@@ -17,13 +17,13 @@
 package v1
 
 import (
+	"errors"
 	"net/http"
 	"testing"
 
 	mock_http "github.com/aws/amazon-ecs-agent/agent/handlers/mocks/http"
 	mock_utils "github.com/aws/amazon-ecs-agent/agent/utils/mocks"
 	"github.com/golang/mock/gomock"
-	"github.com/pkg/errors"
 )
 
 func TestLicenseHandler(t *testing.T) {

@@ -14,6 +14,7 @@
 package dependencygraph
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -25,7 +26,6 @@ import (
 	"github.com/aws/amazon-ecs-agent/agent/credentials"
 	"github.com/aws/amazon-ecs-agent/agent/taskresource"
 	log "github.com/cihub/seelog"
-	"github.com/pkg/errors"
 )
 
 const (

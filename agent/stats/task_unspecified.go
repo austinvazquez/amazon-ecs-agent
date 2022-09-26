@@ -17,13 +17,13 @@
 package stats
 
 import (
+	"errors"
 	"time"
 
 	"github.com/aws/amazon-ecs-agent/agent/api/task"
 	"github.com/aws/amazon-ecs-agent/agent/stats/resolver"
 
 	dockerstats "github.com/docker/docker/api/types"
-	"github.com/pkg/errors"
 )
 
 // Dummy StatsTasks

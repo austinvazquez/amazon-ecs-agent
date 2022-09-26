@@ -19,6 +19,7 @@ package eventhandler
 import (
 	"container/list"
 	"context"
+	"errors"
 	"strconv"
 	"sync"
 	"testing"
@@ -42,7 +43,6 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/golang/mock/gomock"
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 )
 

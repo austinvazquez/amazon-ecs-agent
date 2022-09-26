@@ -15,6 +15,7 @@ package asm
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -22,7 +23,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/secretsmanager/secretsmanageriface"
 	"github.com/cihub/seelog"
 	"github.com/docker/docker/api/types"
-	"github.com/pkg/errors"
 )
 
 // AuthDataValue is the schema for
@@ -41,8 +41,7 @@ func GetDockerAuthFromASM(secretID string, client secretsmanageriface.SecretsMan
 
 	out, err := client.GetSecretValue(in)
 	if err != nil {
-		return types.AuthConfig{}, errors.Wrapf(err,
-			"asm fetching secret from the service for %s", secretID)
+		return types.AuthConfig{}, fmt.Errorf("asm fetching secret from the service for %s: %v", secretID, err)
 	}
 
 	return extractASMValue(out)
@@ -93,7 +92,7 @@ func GetSecretFromASMWithInput(input *secretsmanager.GetSecretValueInput,
 	client secretsmanageriface.SecretsManagerAPI, jsonKey string) (string, error) {
 	out, err := client.GetSecretValue(input)
 	if err != nil {
-		return "", errors.Wrapf(err, "secret %s", *input.SecretId)
+		return "", fmt.Errorf("secret %s: %v", *input.SecretId, err)
 	}
 
 	if jsonKey == "" {
@@ -109,8 +108,7 @@ func GetSecretFromASMWithInput(input *secretsmanager.GetSecretValueInput,
 
 	secretValue, ok := secretMap[jsonKey]
 	if !ok {
-		err = errors.New(fmt.Sprintf("retrieved secret from Secrets Manager did not contain json key %s", jsonKey))
-		return "", err
+		return "", fmt.Errorf("retrieved secret from Secrets Manager did not contain json key %s", jsonKey)
 	}
 
 	return fmt.Sprintf("%v", secretValue), nil
@@ -125,7 +123,7 @@ func GetSecretFromASM(secretID string, client secretsmanageriface.SecretsManager
 
 	out, err := client.GetSecretValue(in)
 	if err != nil {
-		return "", errors.Wrapf(err, "secret %s", secretID)
+		return "", fmt.Errorf("secret %s: %v", secretID, err)
 	}
 
 	return aws.StringValue(out.SecretString), nil

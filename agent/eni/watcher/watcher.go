@@ -15,6 +15,7 @@ package watcher
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -22,7 +23,6 @@ import (
 	"github.com/aws/amazon-ecs-agent/agent/statechange"
 
 	log "github.com/cihub/seelog"
-	"github.com/pkg/errors"
 
 	"github.com/aws/amazon-ecs-agent/agent/api"
 	apieni "github.com/aws/amazon-ecs-agent/agent/api/eni"
@@ -127,15 +127,15 @@ func (eniWatcher *ENIWatcher) sendENIStateChange(mac string) error {
 		return &unmanagedENIError{mac}
 	}
 	if eni.IsSent() {
-		return errors.Errorf("eni watcher send ENI state change: %s: %s", eniStatusSentMsg, eni.String())
+		return fmt.Errorf("eni watcher send ENI state change: %s: %s", eniStatusSentMsg, eni.String())
 	}
 	if eni.HasExpired() {
 		// Agent is aware of the ENI, but we decide not to ack it
 		// as it's ack timeout has expired
 		eniWatcher.agentState.RemoveENIAttachment(eni.MACAddress)
-		return errors.Errorf(
-			"eni watcher send ENI state change: eni status expired, no longer tracking it: %s",
-			eni.String())
+		return fmt.Errorf(
+			"eni watcher send ENI state change: eni status expired, no longer tracking it: %s", eni.String(),
+		)
 	}
 
 	// We found an ENI, which has the expiration time set in future and
@@ -202,8 +202,9 @@ func (eniWatcher *ENIWatcher) sendENIStateChangeWithRetries(parentCtx context.Co
 	// RetryWithBackoffCtx returns nil when the context is cancelled. Check if there was
 	// a timeout here. TODO: Fix RetryWithBackoffCtx to return ctx.Err() on context Done()
 	if err = ctx.Err(); err != nil {
-		return errors.Wrapf(err,
-			"eni watcher send ENI state change: timed out waiting for eni '%s' in state", macAddress)
+		return fmt.Errorf(
+			"eni watcher send ENI state change: timed out waiting for eni '%s' in state: %v", macAddress, err,
+		)
 	}
 
 	return nil

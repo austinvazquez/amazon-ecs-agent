@@ -17,6 +17,7 @@ package stats
 
 import (
 	"context"
+	"fmt"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -26,7 +27,6 @@ import (
 	"github.com/aws/amazon-ecs-agent/agent/stats/resolver"
 
 	dockerstats "github.com/docker/docker/api/types"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -95,7 +95,7 @@ func newStatsTaskContainer(taskARN, taskId, containerPID string, numberOfContain
 
 func (taskStat *StatsTask) retrieveNetworkStatistics() (map[string]dockerstats.NetworkStats, error) {
 	if len(taskStat.TaskMetadata.DeviceName) == 0 {
-		return nil, errors.Errorf("unable to find any device name associated with the task %s", taskStat.TaskMetadata.TaskArn)
+		return nil, fmt.Errorf("unable to find any device name associated with the task %s", taskStat.TaskMetadata.TaskArn)
 	}
 
 	networkStats := make(map[string]dockerstats.NetworkStats, len(taskStat.TaskMetadata.DeviceName))
@@ -119,7 +119,7 @@ func (taskStat *StatsTask) getNetworkAdaptorStatistics(device string) (*dockerst
 	out, err := execCommand("powershell", "-Command", cmd).CombinedOutput()
 
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to run Get-NetAdapterStatistics for %s", device)
+		return nil, fmt.Errorf("failed to run Get-NetAdapterStatistics for %s: %v", device, err)
 	}
 	str := string(out)
 
@@ -165,11 +165,11 @@ func (taskStat *StatsTask) getNetworkAdaptorStatistics(device string) (*dockerst
 func (taskStat *StatsTask) getMapValue(m map[string]string, key string) (uint64, error) {
 	v, ok := m[key]
 	if !ok {
-		return 0, errors.Errorf("failed to find key: %s in output", key)
+		return 0, fmt.Errorf("failed to find key: %s in output", key)
 	}
 	val, err := strconv.ParseUint(v, 10, 64)
 	if err != nil {
-		return 0, errors.Errorf("failed to parse network stats for %s with value: %s", key, v)
+		return 0, fmt.Errorf("failed to parse network stats for %s with value: %s", key, v)
 	}
 	return val, nil
 }

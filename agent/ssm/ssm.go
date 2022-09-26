@@ -14,12 +14,12 @@
 package ssm
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ssm"
-	"github.com/pkg/errors"
 )
 
 // GetSecretFromSSM makes the api call to the AWS SSM parameter store to
@@ -55,8 +55,7 @@ func getParameters(names []string, client SSMClient, withDecryption bool) (map[s
 
 func extractSSMValues(out *ssm.GetParametersOutput) (map[string]string, error) {
 	if out == nil {
-		return nil, errors.New(
-			"empty response")
+		return nil, errors.New("empty response")
 	}
 
 	if len(out.InvalidParameters) != 0 {

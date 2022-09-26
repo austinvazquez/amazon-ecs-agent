@@ -14,6 +14,8 @@
 package handler
 
 import (
+	"errors"
+	"fmt"
 	"time"
 
 	"github.com/aws/amazon-ecs-agent/agent/acs/model/ecsacs"
@@ -24,7 +26,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 
 	"github.com/cihub/seelog"
-	"github.com/pkg/errors"
 
 	"context"
 )
@@ -98,8 +99,7 @@ func (handler *attachInstanceENIHandler) handleSingleMessage(message *ecsacs.Att
 	receivedAt := time.Now()
 	// Validate fields in the message
 	if err := validateAttachInstanceNetworkInterfacesMessage(message); err != nil {
-		return errors.Wrapf(err,
-			"attach instance eni message handler: error validating AttachInstanceNetworkInterfacesMessage")
+		return fmt.Errorf("attach instance eni message handler: error validating AttachInstanceNetworkInterfacesMessage: %w", err)
 	}
 
 	// Send ACK
@@ -116,38 +116,37 @@ func (handler *attachInstanceENIHandler) handleSingleMessage(message *ecsacs.Att
 // AttachInstanceNetworkInterfacesMessage
 func validateAttachInstanceNetworkInterfacesMessage(message *ecsacs.AttachInstanceNetworkInterfacesMessage) error {
 	if message == nil {
-		return errors.Errorf("message is empty")
+		return errors.New("message is empty")
 	}
 
 	messageId := aws.StringValue(message.MessageId)
 	if messageId == "" {
-		return errors.Errorf("message id not set")
+		return errors.New("message id not set")
 	}
 
 	clusterArn := aws.StringValue(message.ClusterArn)
 	if clusterArn == "" {
-		return errors.Errorf("clusterArn not set")
+		return errors.New("clusterArn not set")
 	}
 
 	containerInstanceArn := aws.StringValue(message.ContainerInstanceArn)
 	if containerInstanceArn == "" {
-		return errors.Errorf("containerInstanceArn not set")
+		return errors.New("containerInstanceArn not set")
 	}
 
 	enis := message.ElasticNetworkInterfaces
 	if len(enis) != 1 {
-		return errors.Errorf("incorrect number of instance ENIs in message: %d", len(enis))
+		return fmt.Errorf("incorrect number of instance ENIs in message: %d", len(enis))
 	}
 
 	eni := enis[0]
 	if aws.StringValue(eni.MacAddress) == "" {
-		return errors.Errorf("MACAddress not provided")
+		return errors.New("MACAddress not provided")
 	}
 
 	timeout := aws.Int64Value(message.WaitTimeoutMs)
 	if timeout <= 0 {
-		return errors.Errorf("invalid timeout specified: %d", timeout)
-
+		return fmt.Errorf("invalid timeout specified: %d", timeout)
 	}
 	return nil
 }

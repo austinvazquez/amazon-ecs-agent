@@ -1,10 +1,10 @@
 package utils
 
 import (
+	"errors"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws/arn"
-	"github.com/pkg/errors"
 )
 
 const (

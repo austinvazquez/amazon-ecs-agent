@@ -17,6 +17,8 @@
 package ecscni
 
 import (
+	"errors"
+	"fmt"
 	"regexp"
 
 	"github.com/aws/amazon-ecs-agent/agent/api/eni"
@@ -24,7 +26,6 @@ import (
 	"github.com/cihub/seelog"
 	"github.com/containernetworking/cni/libcni"
 	"github.com/containernetworking/cni/pkg/types"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -63,7 +64,7 @@ func NewVPCENIPluginConfigForTaskNSSetup(eni *eni.ENI, cfg *Config) (*libcni.Net
 
 	networkConfig, err := newNetworkConfig(eniConf, ECSVPCENIPluginExecutable, cfg.MinSupportedCNIVersion)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create vpc-eni plugin configuration for setting up task network namespace")
+		return nil, fmt.Errorf("failed to create vpc-eni plugin configuration for setting up task network namespace: %v", err)
 	}
 
 	networkConfig.Network.Name = TaskHNSNetworkNamePrefix
@@ -80,7 +81,7 @@ func NewVPCENIPluginConfigForECSBridgeSetup(cfg *Config) (*libcni.NetworkConfig,
 
 	networkConfig, err := newNetworkConfig(bridgeConf, ECSVPCENIPluginExecutable, cfg.MinSupportedCNIVersion)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create vpc-eni plugin configuration for setting up ecs-bridge endpoint of the task")
+		return nil, fmt.Errorf("failed to create vpc-eni plugin configuration for setting up ecs-bridge endpoint of the task: %v", err)
 	}
 
 	networkConfig.Network.Name = ECSBridgeNetworkName

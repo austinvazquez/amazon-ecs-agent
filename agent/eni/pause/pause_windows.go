@@ -18,11 +18,11 @@ package pause
 
 import (
 	"context"
+	"errors"
 
 	"github.com/aws/amazon-ecs-agent/agent/config"
 	"github.com/aws/amazon-ecs-agent/agent/dockerclient/dockerapi"
 	"github.com/docker/docker/api/types"
-	"github.com/pkg/errors"
 )
 
 // In Linux, we use a tar archive to load the pause image. Whereas in Windows, we will cache the image during AMI build.

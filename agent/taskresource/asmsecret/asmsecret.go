@@ -15,13 +15,13 @@ package asmsecret
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/cihub/seelog"
-	"github.com/pkg/errors"
 
 	apicontainer "github.com/aws/amazon-ecs-agent/agent/api/container"
 	apicontainerstatus "github.com/aws/amazon-ecs-agent/agent/api/container/status"
@@ -172,8 +172,7 @@ func (secret *ASMSecretResource) NextKnownState() resourcestatus.ResourceStatus 
 func (secret *ASMSecretResource) ApplyTransition(nextState resourcestatus.ResourceStatus) error {
 	transitionFunc, ok := secret.resourceStatusToTransitionFunction[nextState]
 	if !ok {
-		return errors.Errorf("resource [%s]: transition to %s impossible", secret.GetName(),
-			secret.StatusString(nextState))
+		return fmt.Errorf("resource [%s]: transition to %s impossible", secret.GetName(), secret.StatusString(nextState))
 	}
 	return transitionFunc()
 }
@@ -354,8 +353,7 @@ func getASMParametersFromInput(valueFrom string) (input *secretsmanager.GetSecre
 	}
 	if len(paramValues) != len(strings.Split(asmARNResourceWithParametersFormat, arnDelimiter)) {
 		// can't tell what input this is, throw some error
-		err = errors.New("an invalid ARN format for the AWS Secrets Manager secret was specified. Specify a valid ARN and try again.")
-		return nil, "", err
+		return nil, "", errors.New("an invalid format for the AWS Secrets Manager secret was specified. Specify a valid ARN and try again.")
 	}
 
 	input.SecretId = pointerOrNil(reconstructASMARN(arnObj))

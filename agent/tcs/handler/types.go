@@ -15,6 +15,7 @@ package tcshandler
 
 import (
 	"context"
+	"errors"
 	"sync"
 
 	"github.com/aws/amazon-ecs-agent/agent/api"
@@ -25,7 +26,6 @@ import (
 	"github.com/aws/amazon-ecs-agent/agent/stats"
 	"github.com/aws/amazon-ecs-agent/agent/utils/ttime"
 	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/pkg/errors"
 )
 
 // TelemetrySessionParams contains all the parameters required to start a tcs

@@ -24,7 +24,6 @@ import (
 	apitask "github.com/aws/amazon-ecs-agent/agent/api/task"
 	apitaskstatus "github.com/aws/amazon-ecs-agent/agent/api/task/status"
 	"github.com/aws/amazon-ecs-agent/agent/statechange"
-	"github.com/pkg/errors"
 
 	"github.com/aws/aws-sdk-go/aws"
 )
@@ -107,14 +106,10 @@ func NewTaskStateChangeEvent(task *apitask.Task, reason string) (TaskStateChange
 	var event TaskStateChange
 	taskKnownStatus := task.GetKnownStatus()
 	if !taskKnownStatus.BackendRecognized() {
-		return event, errors.Errorf(
-			"create task state change event api: status not recognized by ECS: %v",
-			taskKnownStatus)
+		return event, fmt.Errorf("create task state change event api: status not recognized by ECS: %v", taskKnownStatus)
 	}
 	if task.GetSentStatus() >= taskKnownStatus {
-		return event, errors.Errorf(
-			"create task state change event api: status [%s] already sent",
-			taskKnownStatus.String())
+		return event, fmt.Errorf("create task state change event api: status [%s] already sent", taskKnownStatus.String())
 	}
 
 	event = TaskStateChange{
@@ -138,14 +133,13 @@ func NewContainerStateChangeEvent(task *apitask.Task, cont *apicontainer.Contain
 	}
 	contKnownStatus := cont.GetKnownStatus()
 	if !contKnownStatus.ShouldReportToBackend(cont.GetSteadyStateStatus()) {
-		return event, errors.Errorf(
-			"create container state change event api: status not recognized by ECS: %v",
-			contKnownStatus)
+		return event, fmt.Errorf("create container state change event api: status not recognized by ECS: %v", contKnownStatus)
 	}
 	if cont.GetSentStatus() >= contKnownStatus {
-		return event, errors.Errorf(
+		return event, fmt.Errorf(
 			"create container state change event api: status [%s] already sent for container %s, task %s",
-			contKnownStatus.String(), cont.Name, task.Arn)
+			contKnownStatus.String(), cont.Name, task.Arn,
+		)
 	}
 	if reason == "" && cont.ApplyingError != nil {
 		reason = cont.ApplyingError.Error()
@@ -157,9 +151,7 @@ func NewContainerStateChangeEvent(task *apitask.Task, cont *apicontainer.Contain
 func newUncheckedContainerStateChangeEvent(task *apitask.Task, cont *apicontainer.Container, reason string) (ContainerStateChange, error) {
 	var event ContainerStateChange
 	if cont.IsInternal() {
-		return event, errors.Errorf(
-			"create container state change event api: internal container: %s",
-			cont.Name)
+		return event, fmt.Errorf("create container state change event api: internal container: %s", cont.Name)
 	}
 	contKnownStatus := cont.GetKnownStatus()
 	event = ContainerStateChange{
@@ -182,10 +174,10 @@ func NewManagedAgentChangeEvent(task *apitask.Task, cont *apicontainer.Container
 	var event = ManagedAgentStateChange{}
 	managedAgent, ok := cont.GetManagedAgentByName(managedAgentName)
 	if !ok {
-		return event, errors.Errorf("No ExecuteCommandAgent available in container: %v", cont.Name)
+		return event, fmt.Errorf("No ExecuteCommandAgent available in container: %v", cont.Name)
 	}
 	if !managedAgent.Status.ShouldReportToBackend() {
-		return event, errors.Errorf("create managed agent state change event: status not recognized by ECS: %v", managedAgent.Status)
+		return event, fmt.Errorf("create managed agent state change event: status not recognized by ECS: %v", managedAgent.Status)
 	}
 
 	event = ManagedAgentStateChange{

@@ -17,6 +17,8 @@
 package app
 
 import (
+	"errors"
+	"fmt"
 	"os"
 
 	asmfactory "github.com/aws/amazon-ecs-agent/agent/asm/factory"
@@ -35,7 +37,6 @@ import (
 	cgroup "github.com/aws/amazon-ecs-agent/agent/taskresource/cgroup/control"
 	"github.com/aws/amazon-ecs-agent/agent/utils/ioutilwrapper"
 	"github.com/cihub/seelog"
-	"github.com/pkg/errors"
 )
 
 // initPID defines the process identifier for the init process
@@ -121,8 +122,10 @@ func (agent *ecsAgent) verifyCNIPluginsCapabilities() error {
 			continue
 		}
 		if !contains(capabilities, ecscni.CapabilityAWSVPCNetworkingMode) {
-			return errors.Errorf("plugin '%s' doesn't support the capability: %s",
-				plugin, ecscni.CapabilityAWSVPCNetworkingMode)
+			return fmt.Errorf(
+				"plugin '%s' doesn't support the capability: %s",
+				plugin, ecscni.CapabilityAWSVPCNetworkingMode,
+			)
 		}
 	}
 
@@ -136,12 +139,12 @@ func (agent *ecsAgent) startENIWatcher(state dockerstate.TaskEngineState, stateC
 	if agent.eniWatcher == nil {
 		eniWatcher, err := watcher.New(agent.ctx, agent.mac, state, stateChangeEvents)
 		if err != nil {
-			return errors.Wrapf(err, "unable to create ENI watcher")
+			return fmt.Errorf("unable to create ENI watcher: %v", err)
 		}
 		agent.eniWatcher = eniWatcher
 
 		if err := agent.eniWatcher.Init(); err != nil {
-			return errors.Wrapf(err, "unable to initialize eni watcher")
+			return fmt.Errorf("unable to initialize eni watcher: %v", err)
 		}
 		go agent.eniWatcher.Start()
 	}
@@ -174,7 +177,7 @@ func (agent *ecsAgent) cgroupInit() error {
 		return nil
 	}
 	if agent.cfg.TaskCPUMemLimit.Value == config.ExplicitlyEnabled {
-		return errors.Wrapf(err, "unable to setup '/ecs' cgroup")
+		return fmt.Errorf("unable to setup '/ecs' cgroup: %v", err)
 	}
 	seelog.Warnf("Disabling TaskCPUMemLimit because agent is unable to setup '/ecs' cgroup: %v", err)
 	agent.cfg.TaskCPUMemLimit.Value = config.ExplicitlyDisabled

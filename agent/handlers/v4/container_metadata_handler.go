@@ -23,7 +23,6 @@ import (
 	"github.com/aws/amazon-ecs-agent/agent/handlers/utils"
 	v3 "github.com/aws/amazon-ecs-agent/agent/handlers/v3"
 	"github.com/cihub/seelog"
-	"github.com/pkg/errors"
 )
 
 // ContainerMetadataPath specifies the relative URI path for serving container metadata.
@@ -66,7 +65,7 @@ func GetContainerResponse(containerID string, state dockerstate.TaskEngineState)
 	containerResponse, err := NewContainerResponse(containerID, state)
 	if err != nil {
 		seelog.Errorf("Unable to get container metadata for container '%s'", containerID)
-		return nil, errors.Errorf("unable to generate metadata for container '%s'", containerID)
+		return nil, fmt.Errorf("unable to generate metadata for container '%s'", containerID)
 	}
 
 	// fill in network details if not set for NON AWSVPC Task
@@ -82,13 +81,13 @@ func GetContainerResponse(containerID string, state dockerstate.TaskEngineState)
 func GetContainerNetworkMetadata(containerID string, state dockerstate.TaskEngineState) ([]Network, error) {
 	dockerContainer, ok := state.ContainerByID(containerID)
 	if !ok {
-		return nil, errors.Errorf("unable to find container '%s'", containerID)
+		return nil, fmt.Errorf("unable to find container '%s'", containerID)
 	}
 	// the logic here has been reused from
 	// https://github.com/aws/amazon-ecs-agent/blob/0c8913ba33965cf6ffdd6253fad422458d9346bd/agent/containermetadata/parse_metadata.go#L123
 	settings := dockerContainer.Container.GetNetworkSettings()
 	if settings == nil {
-		return nil, errors.Errorf("unable to generate network response for container '%s'", containerID)
+		return nil, fmt.Errorf("unable to generate network response for container '%s'", containerID)
 	}
 	// This metadata is the information provided in older versions of the API
 	// We get the NetworkMode (Network interface name) from the HostConfig because this

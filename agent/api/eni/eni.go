@@ -14,6 +14,7 @@
 package eni
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"strings"
@@ -23,7 +24,6 @@ import (
 
 	"github.com/aws/amazon-ecs-agent/agent/acs/model/ecsacs"
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/pkg/errors"
 )
 
 // ENI contains information of the eni
@@ -340,33 +340,31 @@ func ENIFromACS(acsENI *ecsacs.ElasticNetworkInterface) (*ENI, error) {
 func ValidateTaskENI(acsENI *ecsacs.ElasticNetworkInterface) error {
 	// At least one IPv4 address should be associated with the ENI.
 	if len(acsENI.Ipv4Addresses) < 1 {
-		return errors.Errorf("eni message validation: no ipv4 addresses in the message")
+		return errors.New("eni message validation: no ipv4 addresses in the message")
 	}
 
 	if acsENI.SubnetGatewayIpv4Address == nil {
-		return errors.Errorf("eni message validation: no subnet gateway ipv4 address in the message")
+		return errors.New("eni message validation: no subnet gateway ipv4 address in the message")
 	}
 	gwIPv4Addr := aws.StringValue(acsENI.SubnetGatewayIpv4Address)
 	s := strings.Split(gwIPv4Addr, "/")
 	if len(s) != 2 {
-		return errors.Errorf(
-			"eni message validation: invalid subnet gateway ipv4 address %s", gwIPv4Addr)
+		return fmt.Errorf("eni message validation: invalid subnet gateway ipv4 address %s", gwIPv4Addr)
 	}
 
 	if acsENI.MacAddress == nil {
-		return errors.Errorf("eni message validation: empty eni mac address in the message")
+		return errors.New("eni message validation: empty eni mac address in the message")
 	}
 
 	if acsENI.Ec2Id == nil {
-		return errors.Errorf("eni message validation: empty eni id in the message")
+		return errors.New("eni message validation: empty eni id in the message")
 	}
 
 	// The association protocol, if specified, must be a supported value.
 	if (acsENI.InterfaceAssociationProtocol != nil) &&
 		(aws.StringValue(acsENI.InterfaceAssociationProtocol) != VLANInterfaceAssociationProtocol) &&
 		(aws.StringValue(acsENI.InterfaceAssociationProtocol) != DefaultInterfaceAssociationProtocol) {
-		return errors.Errorf("invalid interface association protocol: %s",
-			aws.StringValue(acsENI.InterfaceAssociationProtocol))
+		return fmt.Errorf("invalid interface association protocol: %s", aws.StringValue(acsENI.InterfaceAssociationProtocol))
 	}
 
 	// If the interface association protocol is vlan, InterfaceVlanProperties must be specified.

@@ -17,12 +17,12 @@
 package eni
 
 import (
+	"errors"
 	"net"
 	"testing"
 
 	"github.com/aws/amazon-ecs-agent/agent/acs/model/ecsacs"
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 )
 

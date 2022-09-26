@@ -14,6 +14,8 @@
 package v4
 
 import (
+	"errors"
+
 	"github.com/aws/amazon-ecs-agent/agent/api"
 	apicontainer "github.com/aws/amazon-ecs-agent/agent/api/container"
 	apieni "github.com/aws/amazon-ecs-agent/agent/api/eni"
@@ -22,7 +24,6 @@ import (
 	"github.com/aws/amazon-ecs-agent/agent/engine/dockerstate"
 	"github.com/aws/amazon-ecs-agent/agent/handlers/utils"
 	v2 "github.com/aws/amazon-ecs-agent/agent/handlers/v2"
-	"github.com/pkg/errors"
 )
 
 // TaskResponse is the v4 Task response. It augments the v4 Container response

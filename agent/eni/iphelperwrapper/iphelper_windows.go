@@ -17,13 +17,14 @@
 package iphelperwrapper
 
 import (
+	"errors"
+	"fmt"
 	"math"
 	"syscall"
 	"time"
 	"unsafe"
 
 	log "github.com/cihub/seelog"
-	"github.com/pkg/errors"
 	"golang.org/x/sys/windows"
 )
 
@@ -89,7 +90,7 @@ func (monitor *eniMonitor) Start(notification chan int) error {
 
 	// If there is any error while registering callback then retVal will not be 0. Therefore, we will return with an error.
 	if retVal != 0 {
-		return errors.Errorf("error occured while calling Windows API: %s", syscall.Errno(retVal))
+		return fmt.Errorf("error occured while calling Windows API: %s", syscall.Errno(retVal))
 	}
 
 	// Initial notification is sent immediately once the callback is registered.
@@ -104,9 +105,9 @@ func (monitor *eniMonitor) Start(notification chan int) error {
 		case <-time.After(initialNotificationTimeout):
 			log.Errorf("IPHelper: Initial notification not received within timeout. Closing the Monitor.")
 			if retErr := monitor.Close(); retErr != nil {
-				return errors.Wrapf(retErr, "initial notification not received")
+				return fmt.Errorf("initial notification not received: %v", retErr)
 			}
-			return errors.Errorf("initial notification not received while starting ENI monitor")
+			return errors.New("initial notification not received while starting ENI monitor")
 		}
 	}
 }
@@ -151,7 +152,7 @@ func (monitor *eniMonitor) cancelNotification() error {
 	res, _, _ := monitor.funcCancelMibChangeNotify2(uintptr(monitor.notificationHandle))
 
 	if res != 0 {
-		return errors.Errorf("error caused while deregistering from windows notification: %s", syscall.Errno(res))
+		return fmt.Errorf("error caused while deregistering from windows notification: %s", syscall.Errno(res))
 	}
 	return nil
 }

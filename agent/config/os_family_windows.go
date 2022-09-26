@@ -22,7 +22,6 @@ import (
 	"github.com/aws/amazon-ecs-agent/agent/statemanager/dependencies"
 
 	"github.com/cihub/seelog"
-	"github.com/pkg/errors"
 	"golang.org/x/sys/windows"
 	"golang.org/x/sys/windows/registry"
 )
@@ -68,7 +67,7 @@ func getInstallationType(installationType string) (string, error) {
 	case installationTypeServerCore:
 		return windowsServerCore, nil
 	default:
-		return "", errors.Errorf("unsupported installation type: %s", installationType)
+		return "", fmt.Errorf("unsupported installation type: %s", installationType)
 	}
 }
 

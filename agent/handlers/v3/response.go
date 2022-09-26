@@ -14,8 +14,9 @@
 package v3
 
 import (
+	"fmt"
+
 	"github.com/aws/amazon-ecs-agent/agent/engine/dockerstate"
-	"github.com/pkg/errors"
 )
 
 // AssociationsResponse defines the schema for the associations response JSON object
@@ -26,13 +27,13 @@ type AssociationsResponse struct {
 func NewAssociationsResponse(containerID, taskARN, associationType string, state dockerstate.TaskEngineState) (*AssociationsResponse, error) {
 	dockerContainer, ok := state.ContainerByID(containerID)
 	if !ok {
-		return nil, errors.Errorf("unable to get container name from docker id: %s", containerID)
+		return nil, fmt.Errorf("unable to get container name from docker id: %s", containerID)
 	}
 	containerName := dockerContainer.Container.Name
 
 	task, ok := state.TaskByArn(taskARN)
 	if !ok {
-		return nil, errors.Errorf("unable to get task from task arn: %s", taskARN)
+		return nil, fmt.Errorf("unable to get task from task arn: %s", taskARN)
 	}
 
 	associationNames := task.AssociationsByTypeAndContainer(associationType, containerName)
@@ -50,13 +51,13 @@ func NewAssociationsResponse(containerID, taskARN, associationType string, state
 func NewAssociationResponse(taskARN, associationType, associationName string, state dockerstate.TaskEngineState) (string, error) {
 	task, ok := state.TaskByArn(taskARN)
 	if !ok {
-		return "", errors.Errorf("unable to get task from task arn: %s", taskARN)
+		return "", fmt.Errorf("unable to get task from task arn: %s", taskARN)
 	}
 
 	association, ok := task.AssociationByTypeAndName(associationType, associationName)
 
 	if !ok {
-		return "", errors.Errorf("unable to get association from association type %s and association name %s", associationType, associationName)
+		return "", fmt.Errorf("unable to get association from association type %s and association name %s", associationType, associationName)
 	}
 
 	return association.Content.Value, nil

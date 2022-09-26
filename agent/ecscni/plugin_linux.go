@@ -27,7 +27,6 @@ import (
 	"github.com/containernetworking/cni/libcni"
 	cnitypes "github.com/containernetworking/cni/pkg/types"
 	"github.com/containernetworking/cni/pkg/types/current"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -64,7 +63,7 @@ func (client *cniClient) setupNS(ctx context.Context, cfg *Config) (*current.Res
 		runtimeConfig.IfName = networkConfig.IfName
 		result, err := client.libcni.AddNetwork(ctx, cniNetworkConfig, &runtimeConfig)
 		if err != nil {
-			return nil, errors.Wrap(err, "add network failed")
+			return nil, fmt.Errorf("add network failed: %v", err)
 		}
 		// Save the result object from the bridge plugin execution. We need this later
 		// for inferring what IPv4 address was used to bring up the veth pair for task.
@@ -88,7 +87,7 @@ func (client *cniClient) setupNS(ctx context.Context, cfg *Config) (*current.Res
 	var curResult *current.Result
 	curResult, ok := bridgeResult.(*current.Result)
 	if !ok {
-		return nil, errors.Errorf(
+		return nil, fmt.Errorf(
 			"cni setup: unable to convert result to expected version '%v'", bridgeResult)
 	}
 

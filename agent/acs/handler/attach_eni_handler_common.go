@@ -29,7 +29,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 
 	"github.com/cihub/seelog"
-	"github.com/pkg/errors"
 )
 
 // ackTimeoutHandler remove ENI attachment from agent state after the ENI ack timeout
@@ -98,8 +97,8 @@ func handleENIAttachment(attachmentType, attachmentARN, taskARN, mac string,
 		return eniAttachment.StartTimer(eniAckTimeoutHandler.handle)
 	}
 	if err := addENIAttachmentToState(attachmentType, attachmentARN, taskARN, mac, expiresAt, state, dataClient); err != nil {
-		return errors.Wrapf(err, fmt.Sprintf("attach %s message handler: unable to add eni attachment to engine state mac=%s taskARN=%s attachmentARN=%s",
-			attachmentType, mac, taskARN, attachmentARN))
+		return fmt.Errorf("attach %s message handler: unable to add eni attachment to engine state mac=%s taskARN=%s attachmentARN=%s: %w",
+			attachmentType, mac, taskARN, attachmentARN, err)
 	}
 	return nil
 }

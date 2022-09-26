@@ -15,12 +15,12 @@ package ssmsecret
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
 
 	"github.com/cihub/seelog"
-	"github.com/pkg/errors"
 
 	apicontainer "github.com/aws/amazon-ecs-agent/agent/api/container"
 	apicontainerstatus "github.com/aws/amazon-ecs-agent/agent/api/container/status"
@@ -168,8 +168,7 @@ func (secret *SSMSecretResource) NextKnownState() resourcestatus.ResourceStatus 
 func (secret *SSMSecretResource) ApplyTransition(nextState resourcestatus.ResourceStatus) error {
 	transitionFunc, ok := secret.resourceStatusToTransitionFunction[nextState]
 	if !ok {
-		return errors.Errorf("resource [%s]: transition to %s impossible", secret.GetName(),
-			secret.StatusString(nextState))
+		return fmt.Errorf("resource [%s]: transition to %s impossible", secret.GetName(), secret.StatusString(nextState))
 	}
 	return transitionFunc()
 }

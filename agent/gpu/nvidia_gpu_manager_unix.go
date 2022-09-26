@@ -18,6 +18,7 @@ package gpu
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"sync"
@@ -25,7 +26,6 @@ import (
 	"github.com/aws/amazon-ecs-agent/agent/ecs_client/model/ecs"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/cihub/seelog"
-	"github.com/pkg/errors"
 )
 
 // GPUManager encompasses methods to get information on GPUs and their driver
@@ -66,12 +66,12 @@ func (n *NvidiaGPUManager) Initialize() error {
 		// GPU info file found
 		gpuJSON, err := GetGPUInfoJSON()
 		if err != nil {
-			return errors.Wrapf(err, "could not read GPU file content")
+			return fmt.Errorf("could not read GPU file content: %v", err)
 		}
 		var nvidiaGPUInfo NvidiaGPUManager
 		err = json.Unmarshal(gpuJSON, &nvidiaGPUInfo)
 		if err != nil {
-			return errors.Wrapf(err, "could not unmarshal GPU file content")
+			return fmt.Errorf("could not unmarshal GPU file content: %v", err)
 		}
 		n.SetDriverVersion(nvidiaGPUInfo.GetDriverVersion())
 		nvidiaGPUInfo.lock.RLock()

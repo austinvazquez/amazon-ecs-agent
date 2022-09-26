@@ -14,6 +14,7 @@
 package utils
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 	"time"
@@ -21,7 +22,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	v4 "github.com/aws/aws-sdk-go/aws/signer/v4"
 	"github.com/cihub/seelog"
-	"github.com/pkg/errors"
 )
 
 // SignHTTPRequest signs an http.Request struct with authv4 using the given region, service, and credentials.
@@ -30,7 +30,7 @@ func SignHTTPRequest(req *http.Request, region, service string, creds *credentia
 	_, err := signer.Sign(req, body, service, region, time.Now())
 	if err != nil {
 		seelog.Warnf("Signing HTTP request failed: %v", err)
-		return errors.Wrap(err, "aws sdk http signer: failed to sign http request")
+		return fmt.Errorf("aws sdk http signer: failed to sign http request: %v", err)
 	}
 	return nil
 }

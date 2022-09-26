@@ -17,11 +17,12 @@
 package app
 
 import (
+	"errors"
+
 	"github.com/aws/amazon-ecs-agent/agent/config"
 	"github.com/aws/amazon-ecs-agent/agent/engine"
 
 	"github.com/cihub/seelog"
-	"github.com/pkg/errors"
 )
 
 // checkCompatibility (for linux) ensures that the running task engine is capable for running with the TaskCPUMemLimit

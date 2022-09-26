@@ -18,6 +18,7 @@ package networkutils
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"os"
 	"strings"
@@ -31,7 +32,6 @@ import (
 	"github.com/aws/amazon-ecs-agent/agent/eni/netwrapper"
 	"github.com/aws/amazon-ecs-agent/agent/utils/retry"
 	"github.com/cihub/seelog"
-	"github.com/pkg/errors"
 )
 
 // NetworkUtils is the interface used for accessing network related functionality on Windows.
@@ -95,7 +95,7 @@ func (utils *networkUtils) retrieveMAC() (string, error) {
 
 		if iface.HardwareAddr.String() == "" {
 			seelog.Debugf("Empty MAC Address for interface with index: %v", utils.interfaceIndex)
-			return errors.Errorf("empty mac address for interface with index: %v", utils.interfaceIndex)
+			return fmt.Errorf("empty mac address for interface with index: %v", utils.interfaceIndex)
 		}
 
 		utils.macAddress = iface.HardwareAddr.String()
@@ -107,7 +107,7 @@ func (utils *networkUtils) retrieveMAC() (string, error) {
 	}
 
 	if err = ctx.Err(); err != nil {
-		return "", errors.Wrapf(err, "timed out waiting for mac address for interface with Index: %v", utils.interfaceIndex)
+		return "", fmt.Errorf("timed out waiting for mac address for interface with Index: %v: %v", utils.interfaceIndex, err)
 	}
 
 	return utils.macAddress, nil
